@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3 uid="uid://dntos7fy5n6ko"]
+
+[ext_resource type="Script" path="res://scripts/game/Player.cs" id="1_wps60"]
+[ext_resource type="Script" path="res://scripts/game/Hand.cs" id="2_addbm"]
+
+[node name="Player" type="Node2D" groups=["ComabtEntity"]]
+script = ExtResource("1_wps60")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+
+[node name="Hand" type="Node2D" parent="."]
+position = Vector2(480, 650)
+script = ExtResource("2_addbm")

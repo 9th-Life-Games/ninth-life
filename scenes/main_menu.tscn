@@ -1,0 +1,111 @@
+[gd_scene load_steps=16 format=3 uid="uid://ee0drjsaektx"]
+
+[ext_resource type="Script" path="res://scripts/main_menu/MainMenu.cs" id="1_teuou"]
+[ext_resource type="Texture2D" uid="uid://bdm1njhkxoco7" path="res://assets/Backgrounds/Selectscreen.png" id="2_dwqd4"]
+[ext_resource type="Script" path="res://scripts/main_menu/SuitSelection.cs" id="3_4meu0"]
+[ext_resource type="Texture2D" uid="uid://bfig3w6gk0hv" path="res://assets/Character Sprites/Skull/skull_sprite.png" id="4_t2w7y"]
+[ext_resource type="Texture2D" uid="uid://b6mtymncheum0" path="res://assets/Card Art/weapon/longblade/ace_longblade.png" id="5_b6tru"]
+[ext_resource type="Texture2D" uid="uid://dqp7jllyqw54g" path="res://assets/Card Art/weapon/longblade/king_longblade.png" id="5_ub4bq"]
+[ext_resource type="Texture2D" uid="uid://bpyqaa33txkwj" path="res://assets/Card Art/weapon/mace/ace_mace.png" id="6_ut3ep"]
+[ext_resource type="Texture2D" uid="uid://dr74lrdq10ynw" path="res://assets/Card Art/weapon/shortblade/king_shortblade.png" id="7_0v1rl"]
+[ext_resource type="Texture2D" uid="uid://cswi52i3hguj4" path="res://assets/Card Art/weapon/shortblade/ace_shortblade.png" id="8_hapc0"]
+[ext_resource type="Texture2D" uid="uid://u7y12ue45rbn" path="res://assets/Card Art/armor/heavyarmor/ace_heavyarmor.png" id="8_vb75k"]
+[ext_resource type="Texture2D" uid="uid://c2y2g0ky0uirt" path="res://assets/Card Art/armor/lightarmor/ace_lightarmor.png" id="9_s7hi0"]
+[ext_resource type="Texture2D" uid="uid://cika7txgm0mti" path="res://assets/Card Art/weapon/mace/king_mace.png" id="9_t60cw"]
+[ext_resource type="Texture2D" uid="uid://b4n8rqqd4ghua" path="res://assets/Card Art/armor/heavyarmor/king_heavyarmor.png" id="11_cn8g7"]
+[ext_resource type="Texture2D" uid="uid://c5lwflf41ycnk" path="res://assets/Card Art/armor/lightarmor/king_lightarmor.png" id="13_shtxr"]
+[ext_resource type="FontFile" uid="uid://diqt2vii6tchx" path="res://assets/Fonts/CloisterBlack.ttf" id="15_2sie1"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_teuou")
+
+[node name="TextureRect" type="TextureRect" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+texture = ExtResource("2_dwqd4")
+
+[node name="WeaponSelection" type="Node" parent="."]
+script = ExtResource("3_4meu0")
+
+[node name="ArmorSelection" type="Node" parent="."]
+script = ExtResource("3_4meu0")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 439.0
+offset_top = 21.0
+offset_right = 505.0
+offset_bottom = 190.0
+color = Color(1, 1, 1, 0.388235)
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(480, 103)
+texture = ExtResource("4_t2w7y")
+hframes = 3
+
+[node name="Longblade" type="TextureButton" parent="." groups=["WeaponSelection"]]
+layout_mode = 0
+offset_left = 57.0
+offset_top = 285.0
+offset_right = 141.0
+offset_bottom = 413.0
+toggle_mode = true
+texture_normal = ExtResource("5_ub4bq")
+texture_pressed = ExtResource("5_b6tru")
+
+[node name="Shortblade" type="TextureButton" parent="." groups=["WeaponSelection"]]
+layout_mode = 0
+offset_left = 182.0
+offset_top = 284.0
+offset_right = 266.0
+offset_bottom = 412.0
+toggle_mode = true
+texture_normal = ExtResource("7_0v1rl")
+texture_pressed = ExtResource("8_hapc0")
+
+[node name="Mace" type="TextureButton" parent="." groups=["WeaponSelection"]]
+layout_mode = 0
+offset_left = 301.0
+offset_top = 287.0
+offset_right = 385.0
+offset_bottom = 415.0
+toggle_mode = true
+texture_normal = ExtResource("9_t60cw")
+texture_pressed = ExtResource("6_ut3ep")
+
+[node name="HeavyArmor" type="TextureButton" parent="." groups=["ArmorSelection"]]
+layout_mode = 0
+offset_left = 655.0
+offset_top = 285.0
+offset_right = 739.0
+offset_bottom = 413.0
+toggle_mode = true
+texture_normal = ExtResource("11_cn8g7")
+texture_pressed = ExtResource("8_vb75k")
+
+[node name="LightArmor" type="TextureButton" parent="." groups=["ArmorSelection"]]
+layout_mode = 0
+offset_left = 780.0
+offset_top = 284.0
+offset_right = 864.0
+offset_bottom = 412.0
+toggle_mode = true
+texture_normal = ExtResource("13_shtxr")
+texture_pressed = ExtResource("9_s7hi0")
+
+[node name="ContinueButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 380.0
+offset_top = 440.0
+offset_right = 546.0
+offset_bottom = 505.0
+theme_override_fonts/font = ExtResource("15_2sie1")
+theme_override_font_sizes/font_size = 48
+text = "Continue"

@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://blrd6mdmfy4te"
+path="res://.godot/imported/9L Battle Theme Low Health 072523.mp3-ed28d02f85e8d277b35f5271c39cd049.mp3str"
+
+[deps]
+
+source_file="res://assets/Music/Battle Themes/9L Battle Theme Low Health 072523.mp3"
+dest_files=["res://.godot/imported/9L Battle Theme Low Health 072523.mp3-ed28d02f85e8d277b35f5271c39cd049.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

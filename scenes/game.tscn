@@ -1,0 +1,46 @@
+[gd_scene load_steps=6 format=3 uid="uid://cruxuu5e8mkvj"]
+
+[ext_resource type="Script" path="res://scripts/game/Game.cs" id="1_uqf54"]
+[ext_resource type="Texture2D" uid="uid://ia53v7kydn0a" path="res://assets/Backgrounds/Combat/Background_Dungeon_v2.png" id="2_c8b80"]
+[ext_resource type="Texture2D" uid="uid://jk2iywr57p1j" path="res://assets/Backgrounds/Combat/Brick-Floor-Player.png" id="3_sjmhi"]
+[ext_resource type="Texture2D" uid="uid://lrq3oke7kl1x" path="res://assets/Backgrounds/Combat/brick-floor-enemy.png" id="4_751si"]
+[ext_resource type="Script" path="res://scripts/game/CombatManager.cs" id="5_epdu6"]
+
+[node name="Game" type="Node2D"]
+script = ExtResource("1_uqf54")
+
+[node name="Background" type="Sprite2D" parent="."]
+position = Vector2(480, 270)
+texture = ExtResource("2_c8b80")
+
+[node name="Floor" type="Node2D" parent="Background"]
+
+[node name="AllyFloor" type="Sprite2D" parent="Background/Floor"]
+position = Vector2(-353, -4.5)
+texture = ExtResource("3_sjmhi")
+
+[node name="EnemyFloor" type="Sprite2D" parent="Background/Floor"]
+position = Vector2(359, -4.5)
+texture = ExtResource("4_751si")
+
+[node name="CombatManager" type="Node2D" parent="."]
+script = ExtResource("5_epdu6")
+
+[node name="Hand" type="Node2D" parent="."]
+visible = false
+position = Vector2(480, 500)
+
+[node name="Button" type="Button" parent="."]
+offset_left = 419.0
+offset_top = 293.0
+offset_right = 538.0
+offset_bottom = 324.0
+text = "Next Turn"
+
+[node name="FanButton" type="Button" parent="."]
+visible = false
+offset_left = 419.0
+offset_top = 325.0
+offset_right = 538.0
+offset_bottom = 356.0
+text = "Fan Hand"

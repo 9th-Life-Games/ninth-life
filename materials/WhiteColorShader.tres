@@ -1,0 +1,8 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://c2aiki26mcnqh"]
+
+[ext_resource type="Shader" path="res://materials/WhiteColorShader.gdshader" id="1_wllxj"]
+
+[resource]
+resource_local_to_scene = true
+shader = ExtResource("1_wllxj")
+shader_parameter/active = false

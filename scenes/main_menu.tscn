@@ -1,8 +1,8 @@
 [gd_scene load_steps=16 format=3 uid="uid://ee0drjsaektx"]
 
-[ext_resource type="Script" path="res://scripts/main_menu/MainMenu.cs" id="1_teuou"]
+[ext_resource type="Script" path="res://scripts/menu/MainMenu.cs" id="1_c2em3"]
 [ext_resource type="Texture2D" uid="uid://bdm1njhkxoco7" path="res://assets/Backgrounds/Selectscreen.png" id="2_dwqd4"]
-[ext_resource type="Script" path="res://scripts/main_menu/SuitSelection.cs" id="3_4meu0"]
+[ext_resource type="Script" path="res://scripts/menu/SuitSelection.cs" id="3_00kei"]
 [ext_resource type="Texture2D" uid="uid://bfig3w6gk0hv" path="res://assets/Character Sprites/Skull/skull_sprite.png" id="4_t2w7y"]
 [ext_resource type="Texture2D" uid="uid://b6mtymncheum0" path="res://assets/Card Art/weapon/longblade/ace_longblade.png" id="5_b6tru"]
 [ext_resource type="Texture2D" uid="uid://dqp7jllyqw54g" path="res://assets/Card Art/weapon/longblade/king_longblade.png" id="5_ub4bq"]
@@ -23,7 +23,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_teuou")
+script = ExtResource("1_c2em3")
 
 [node name="TextureRect" type="TextureRect" parent="."]
 layout_mode = 0
@@ -32,10 +32,10 @@ offset_bottom = 40.0
 texture = ExtResource("2_dwqd4")
 
 [node name="WeaponSelection" type="Node" parent="."]
-script = ExtResource("3_4meu0")
+script = ExtResource("3_00kei")
 
 [node name="ArmorSelection" type="Node" parent="."]
-script = ExtResource("3_4meu0")
+script = ExtResource("3_00kei")
 
 [node name="ColorRect" type="ColorRect" parent="."]
 layout_mode = 0

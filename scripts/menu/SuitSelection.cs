@@ -1,6 +1,6 @@
 using Godot;
 
-namespace NinthLife.scripts.main_menu;
+namespace NinthLife.scripts.menu;
 
 [GlobalClass]
 public partial class SuitSelection : Node

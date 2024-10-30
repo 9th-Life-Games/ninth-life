@@ -1,110 +1,114 @@
 using Godot;
 using NinthLife.scripts.utils;
 
-namespace NinthLife.scripts.game;
-
-public partial class Card : Sprite2D
+namespace NinthLife.scripts.game
 {
-    [Signal]
-    public delegate void CardLeftTreeEventHandler(Card card);
-
-    private AnimationPlayer _animationPlayer;
-    private Button _button;
-    private CardState _currentState = CardState.Idle;
-
-    public string CardName;
-
-    public bool IsFaceCard;
-
-    public int NumericValue;
-
-    public CardLibrary.SuitType SuitType;
-
-    public override void _Ready()
+    public partial class Card : Sprite2D
     {
-        TreeEntered += OnTreeEntered;
+        [Signal]
+        public delegate void CardLeftTreeEventHandler(Card card);
 
-        _button = GetNode<Button>("Button");
-        _button.MouseEntered += OnHoverIn;
-        _button.MouseExited += OnHoverOut;
-        _button.Pressed += OnExit;
+        private AnimationPlayer _animationPlayer;
+        private Button _button;
+        private CardState _currentState = CardState.Idle;
 
-        _animationPlayer = GetNode<AnimationPlayer>("AnimationPlayer");
-        _animationPlayer.AnimationFinished += OnAnimationFinished;
-    }
+        public string CardName { get; private set; }
 
-    public void DisableCard()
-    {
-        _button.Visible = false;
-    }
+        // TODO: Change to private setters
+        public bool IsFaceCard { get; set; }
 
-    public void EnableCard()
-    {
-        _button.Visible = true;
-    }
+        public int NumericValue { get; set; }
 
-    private void OnTreeEntered()
-    {
-        _currentState = CardState.Enter;
-    }
+        public CardLibrary.SuitType SuitType { get; set; }
 
-    public override void _Process(double delta)
-    {
-        switch (_currentState)
+        public override void _Ready()
         {
-            case CardState.Idle:
-                _animationPlayer.Play("idle");
-                break;
-            case CardState.Hovered:
-                break;
-            case CardState.Enter:
-                _animationPlayer.Play("enter");
-                break;
-            case CardState.Exit:
-                _animationPlayer.Play("exit");
-                break;
-        }
-    }
+            TreeEntered += OnTreeEntered;
 
-    private void OnHoverIn()
-    {
-        _animationPlayer.Play("hover_in");
-        _currentState = CardState.Hovered;
-    }
+            _button = GetNode<Button>("Button");
+            _button.MouseEntered += OnHoverIn;
+            _button.MouseExited += OnHoverOut;
+            _button.Pressed += OnExit;
 
-    private void OnHoverOut()
-    {
-        _animationPlayer.Play("hover_out");
-        GetTree().CreateTimer(.1).Timeout += () => _currentState = CardState.Idle;
-    }
-
-    private void OnExit()
-    {
-        _currentState = CardState.Exit;
-        _button.MouseEntered -= OnHoverIn;
-        _button.MouseExited -= OnHoverOut;
-        _button.Pressed -= OnExit;
-    }
-
-    private void OnAnimationFinished(StringName animationName)
-    {
-        if (animationName == "exit")
-        {
-            EmitSignal(SignalName.CardLeftTree, Duplicate());
-            QueueFree();
+            _animationPlayer = GetNode<AnimationPlayer>("AnimationPlayer");
+            _animationPlayer.AnimationFinished += OnAnimationFinished;
         }
 
-        else if (animationName == "enter")
+        public void DisableCard()
         {
-            _currentState = CardState.Idle;
+            _button.Visible = false;
         }
-    }
 
-    private enum CardState
-    {
-        Idle,
-        Hovered,
-        Enter,
-        Exit
+        public void EnableCard()
+        {
+            _button.Visible = true;
+        }
+
+        private void OnTreeEntered()
+        {
+            _currentState = CardState.Enter;
+        }
+
+        public override void _Process(double delta)
+        {
+            switch (_currentState)
+            {
+                case CardState.Idle:
+                    _animationPlayer.Play("idle");
+                    break;
+                case CardState.Hovered:
+                    break;
+                case CardState.Enter:
+                    _animationPlayer.Play("enter");
+                    break;
+                case CardState.Exit:
+                    _animationPlayer.Play("exit");
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private void OnHoverIn()
+        {
+            _animationPlayer.Play("hover_in");
+            _currentState = CardState.Hovered;
+        }
+
+        private void OnHoverOut()
+        {
+            _animationPlayer.Play("hover_out");
+            GetTree().CreateTimer(.1).Timeout += () => _currentState = CardState.Idle;
+        }
+
+        private void OnExit()
+        {
+            GD.Print("Card Played");
+            _currentState = CardState.Exit;
+            _button.MouseEntered -= OnHoverIn;
+            _button.MouseExited -= OnHoverOut;
+            _button.Pressed -= OnExit;
+        }
+
+        private void OnAnimationFinished(StringName animationName)
+        {
+            if (animationName == "exit")
+            {
+                _ = EmitSignal(SignalName.CardLeftTree, Duplicate());
+                QueueFree();
+            }
+            else if (animationName == "enter")
+            {
+                _currentState = CardState.Idle;
+            }
+        }
+
+        private enum CardState
+        {
+            Idle,
+            Hovered,
+            Enter,
+            Exit,
+        }
     }
 }

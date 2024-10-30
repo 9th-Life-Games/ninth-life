@@ -1,41 +1,44 @@
 using Godot;
 
-namespace NinthLife.scripts.game;
-
-public partial class Game : Node2D
+namespace NinthLife.scripts.game
 {
-    private Button _button;
-
-    private CombatManager _combatManager;
-    // private Button _fanButton;
-
-    public override void _UnhandledInput(InputEvent @event)
+    public partial class Game : Node2D
     {
-        if (@event is InputEventKey { Pressed: true, Keycode: Key.Escape }) GetTree().Quit();
-    }
+        private Button _button;
 
-    // Called when the node enters the scene tree for the first time.
-    public override void _Ready()
-    {
-        _button = GetNode<Button>("Button");
-        // _fanButton = GetNode<Button>("FanButton");
-        _combatManager = GetNode<CombatManager>("CombatManager");
-        _button.Pressed += ButtonOnPressed;
-        // _fanButton.Pressed += FanButtonOnPressed;
-    }
+        private CombatManager _combatManager;
 
-    private void FanButtonOnPressed()
-    {
-        _combatManager.CurrentPlayer.SlideHandIn();
-    }
+        // private Button _fanButton;
 
-    private void ButtonOnPressed()
-    {
-        _combatManager.NextTurn();
-    }
+        public override void _UnhandledInput(InputEvent @event)
+        {
+            if (@event is InputEventKey { Pressed: true, Keycode: Key.Escape })
+            {
+                GetTree().Quit();
+            }
+        }
 
-    // Called every frame. 'delta' is the elapsed time since the previous frame.
-    public override void _Process(double delta)
-    {
+        // Called when the node enters the scene tree for the first time.
+        public override void _Ready()
+        {
+            _button = GetNode<Button>("Button");
+            // _fanButton = GetNode<Button>("FanButton");
+            _combatManager = GetNode<CombatManager>("CombatManager");
+            _button.Pressed += ButtonOnPressed;
+            // _fanButton.Pressed += FanButtonOnPressed;
+        }
+
+        private void FanButtonOnPressed()
+        {
+            _combatManager.CurrentPlayer.SlideHandIn();
+        }
+
+        private void ButtonOnPressed()
+        {
+            _combatManager.NextTurn();
+        }
+
+        // Called every frame. 'delta' is the elapsed time since the previous frame.
+        public override void _Process(double delta) { }
     }
 }

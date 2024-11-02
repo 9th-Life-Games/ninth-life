@@ -8,8 +8,6 @@ namespace NinthLife.scripts.game
 
         private CombatManager _combatManager;
 
-        // private Button _fanButton;
-
         public override void _UnhandledInput(InputEvent @event)
         {
             if (@event is InputEventKey { Pressed: true, Keycode: Key.Escape })
@@ -22,15 +20,8 @@ namespace NinthLife.scripts.game
         public override void _Ready()
         {
             _button = GetNode<Button>("Button");
-            // _fanButton = GetNode<Button>("FanButton");
             _combatManager = GetNode<CombatManager>("CombatManager");
             _button.Pressed += ButtonOnPressed;
-            // _fanButton.Pressed += FanButtonOnPressed;
-        }
-
-        private void FanButtonOnPressed()
-        {
-            _combatManager.CurrentPlayer.SlideHandIn();
         }
 
         private void ButtonOnPressed()

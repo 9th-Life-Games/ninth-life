@@ -7,10 +7,7 @@ namespace NinthLife.scripts.game
     public partial class Player : Node2D
     {
         [Signal]
-        public delegate void PlayerTurnEndedEventHandler();
-
-        [Signal]
-        public delegate void PlayerTurnStartedEventHandler();
+        public delegate void PlayerFinishedDrawingEventHandler();
 
         private const int HandSize = 9;
         private const float AnimationSpeed = .25f;
@@ -21,8 +18,11 @@ namespace NinthLife.scripts.game
 
         public List<Card> Deck { get; } = new();
 
+        public BaseBoard PlayerBoard { get; set; }
         public List<Card> Discard { get; } = new();
         public Polygon2D TurnIndicator { get; set; }
+        public Vector2 BoardActivePosition { get; set; }
+        public Vector2 BoardHiddenPosition { get; set; }
         public bool IsAlly { get; set; }
         public int Initiative { get; private set; }
         public int InitiativeBonus { get; set; }
@@ -40,38 +40,35 @@ namespace NinthLife.scripts.game
             TurnIndicator.Polygon = new Vector2[] { new(-10, 0), new(10, 0), new(0, -20) };
             TurnIndicator.Rotate(Mathf.DegToRad(180));
 
+            PlayerBoard.GetNode<Label>("Label").Text = $"{PlayerName}'s Board";
+
             DrawCards(HandSize, .01);
         }
 
         public void StartTurn()
         {
-            GD.Print($"{PlayerName} turn started");
             TurnIndicator.Visible = true;
             int amountToDraw = HandSize - _hand.GetChildren().Count;
             DrawCards(amountToDraw, .5);
 
             GetTree().CreateTimer(amountToDraw * .6).Timeout += () => _hand.EnableCards();
-            _ = EmitSignal(SignalName.PlayerTurnStarted);
         }
 
         public void EndTurn()
         {
-            GD.Print($"{PlayerName} turn ended");
             TurnIndicator.Visible = false;
-            _ = EmitSignal(SignalName.PlayerTurnEnded);
         }
 
         public void SlideHandIn()
         {
-            GD.Print($"{PlayerName}'s hand sliding IN");
-            Tween tween = GetTree().CreateTween();
-            _ = tween.TweenProperty(
+            Tween handTween = GetTree().CreateTween();
+            _ = handTween.TweenProperty(
                 _hand,
                 "global_position:y",
                 GlobalPosition.Y + 500,
                 AnimationSpeed
             );
-            tween.Finished += delegate
+            handTween.Finished += delegate
             {
                 _hand.PositionCards();
             };
@@ -79,11 +76,10 @@ namespace NinthLife.scripts.game
 
         public void SlideHandOut()
         {
-            GD.Print($"{PlayerName}'s hand sliding OUT");
-            Tween tween = GetTree().CreateTween();
+            Tween handTween = GetTree().CreateTween();
             _hand.DisableCards();
             _hand.CollapseHand();
-            _ = tween.TweenProperty(
+            _ = handTween.TweenProperty(
                 _hand,
                 "global_position:y",
                 GlobalPosition.Y + 750,
@@ -91,21 +87,58 @@ namespace NinthLife.scripts.game
             );
         }
 
+        public void SlideBoardIn()
+        {
+            Tween boardTween = GetTree().CreateTween();
+            _ = boardTween.TweenProperty(
+                PlayerBoard,
+                "global_position:y",
+                GlobalPosition.Y + BoardActivePosition.Y,
+                AnimationSpeed
+            );
+        }
+
+        public void SlideBoardOut()
+        {
+            Tween boardTween = GetTree().CreateTween();
+            _ = boardTween.TweenProperty(
+                PlayerBoard,
+                "global_position:y",
+                GlobalPosition.Y + BoardHiddenPosition.Y,
+                AnimationSpeed
+            );
+        }
+
         public void SlideHandDisabled()
         {
-            GD.Print($"{PlayerName}'s hand DISABLED");
-            Tween tween = GetTree().CreateTween();
-            _ = tween.TweenProperty(
+            Tween handTween = GetTree().CreateTween();
+            _ = handTween.TweenProperty(
                 _hand,
                 "global_position:y",
                 GlobalPosition.Y + 575,
                 AnimationSpeed
             );
-            tween.Finished += delegate
+            handTween.Finished += delegate
             {
                 _hand.DisableCards();
                 _hand.PositionCards();
             };
+        }
+
+        public void ShowBoard()
+        {
+            Tween boardTween = GetTree().CreateTween();
+            _ = boardTween.TweenProperty(
+                PlayerBoard,
+                "global_position:y",
+                GlobalPosition.Y + 650,
+                AnimationSpeed
+            );
+        }
+
+        public void EnablePlayerHand()
+        {
+            PlayerFinishedDrawing += _hand.EnableCards;
         }
 
         public async void DrawCards(int x, double delay = AnimationSpeed)
@@ -116,7 +149,7 @@ namespace NinthLife.scripts.game
                 DrawCard();
                 _hand.PositionCards();
             }
-            GD.Print("Finished Drawing Cards");
+            _ = EmitSignal(SignalName.PlayerFinishedDrawing);
         }
 
         // Called every frame. 'delta' is the elapsed time since the previous frame.

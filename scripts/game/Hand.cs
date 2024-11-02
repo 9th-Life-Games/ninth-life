@@ -29,7 +29,6 @@ namespace NinthLife.scripts.game
 
         public void DisableCards()
         {
-            GD.Print("Disabled Cards Function Called");
             foreach (Card card in GetChildren().OfType<Card>())
             {
                 card.DisableCard();
@@ -38,7 +37,6 @@ namespace NinthLife.scripts.game
 
         public void EnableCards()
         {
-            GD.Print("Enabled Cards Function Called");
             foreach (Card card in GetChildren().OfType<Card>())
             {
                 card.EnableCard();

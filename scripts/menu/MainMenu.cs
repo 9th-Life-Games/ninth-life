@@ -7,12 +7,14 @@ namespace NinthLife.scripts.menu
 {
     public partial class MainMenu : Control
     {
-        private readonly Vector2 _goblinPos = new(863, 162);
-        private readonly Vector2 _hopePos = new(60, 150);
-        private readonly Vector2 _skullPos = new(130, 160);
+        private readonly Vector2 _goblinPos = new(870, 193);
+        private readonly Vector2 _goblinTwoPos = new(800, 193);
+        private readonly Vector2 _hopePos = new(60, 145);
+        private readonly Vector2 _skullPos = new(130, 155);
         private SuitSelection _armorSelection;
         private Button _continueButton;
         private Player _goblin;
+        private Player _goblinTwo;
         private TextureButton _heavyArmorButton;
         private Player _hope;
         private TextureButton _lightArmorButton;
@@ -165,14 +167,14 @@ namespace NinthLife.scripts.menu
         private void OnPlayGamePressed()
         {
             _skull = GameUtils.InstantiateCombatEntity(
-                "skull",
+                "Skull",
                 GD.Load<Texture>("res://assets/Character Sprites/Skull/skull_sprite.png"),
                 _skullPos,
                 true
             );
 
             _hope = GameUtils.InstantiateCombatEntity(
-                "hope",
+                "Hope",
                 GD.Load<Texture>("res://assets/Character Sprites/Hope/hope_sprite.png"),
                 _hopePos,
                 true,
@@ -180,9 +182,19 @@ namespace NinthLife.scripts.menu
             );
 
             _goblin = GameUtils.InstantiateCombatEntity(
-                "goblin",
-                GD.Load<Texture>("res://assets/Character Sprites/enemy/goblin/goblin_sprite.png"),
+                "Goblin",
+                GD.Load<Texture>(
+                    "res://assets/Character Sprites/enemy/goblin/goblin_sprite_rs.png"
+                ),
                 _goblinPos
+            );
+
+            _goblinTwo = GameUtils.InstantiateCombatEntity(
+                "Goblin 2",
+                GD.Load<Texture>(
+                    "res://assets/Character Sprites/enemy/goblin/goblin_sprite_rs_2.png"
+                ),
+                _goblinTwoPos
             );
 
             object[] suitsList =
@@ -265,10 +277,18 @@ namespace NinthLife.scripts.menu
             _goblin.ShuffleDeck(4);
             _goblin.CalculateInitiative();
 
-            GD.Print("skull deck size ", _skull.Deck.Count);
+            AddCardsToPlayerDeck(_goblinTwo, CardLibrary.Suits["lions"].Cards);
+            AddCardsToPlayerDeck(_goblinTwo, CardLibrary.Suits["standards"].Cards);
+            AddCardsToPlayerDeck(_goblinTwo, CardLibrary.Suits["mace"].Cards);
+            AddCardsToPlayerDeck(_goblinTwo, CardLibrary.Suits["heavyarmor"].Cards);
+
+            _goblinTwo.ShuffleDeck(4);
+            _goblinTwo.CalculateInitiative();
+
             GameUtils.CombatEntities.Add(_skull);
             GameUtils.CombatEntities.Add(_hope);
             GameUtils.CombatEntities.Add(_goblin);
+            GameUtils.CombatEntities.Add(_goblinTwo);
 
             _ = GetTree().ChangeSceneToFile("res://scenes/game.tscn");
         }

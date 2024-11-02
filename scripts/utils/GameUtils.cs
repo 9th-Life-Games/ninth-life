@@ -22,6 +22,25 @@ namespace NinthLife.scripts.utils
             combatEntity.IsAlly = isAlly;
             combatEntity.PlayerName = name;
 
+            if (isAlly)
+            {
+                combatEntity.PlayerBoard = (BaseBoard)
+                    GD.Load<PackedScene>("res://scenes/player_board.tscn").Instantiate();
+                combatEntity.BoardHiddenPosition = new(480, 575);
+                combatEntity.BoardActivePosition = new(480, 272);
+                combatEntity.PlayerBoard.Position = combatEntity.BoardHiddenPosition;
+                combatEntity.AddChild(combatEntity.PlayerBoard, false, InternalMode.Front);
+            }
+            else
+            {
+                combatEntity.PlayerBoard = (BaseBoard)
+                    GD.Load<PackedScene>("res://scenes/enemy_board.tscn").Instantiate();
+                combatEntity.BoardHiddenPosition = new(576, -155);
+                combatEntity.BoardActivePosition = new(576, 95);
+                combatEntity.PlayerBoard.Position = combatEntity.BoardHiddenPosition;
+                combatEntity.AddChild(combatEntity.PlayerBoard, false, InternalMode.Front);
+            }
+
             Sprite2D sprite = combatEntity.GetNode<Sprite2D>("Sprite2D");
             sprite.Texture = (Texture2D)texture;
             sprite.Hframes = hFrames;
@@ -29,8 +48,8 @@ namespace NinthLife.scripts.utils
 
             Polygon2D turnIndicator = combatEntity.GetNode<Polygon2D>("TurnIndicator");
             float spriteHeight = sprite.Texture.GetHeight();
-            turnIndicator.Position = new Vector2(position.X, position.Y + (-spriteHeight / 2) - 20); // Position above sprite
-            turnIndicator.Color = isAlly ? new Color("00ff00") : new Color("ff0000"); // Set color based on ally/enemy
+            turnIndicator.Position = new Vector2(position.X, position.Y + (-spriteHeight / 2) - 20);
+            turnIndicator.Color = isAlly ? new Color("00ff00") : new Color("ff0000");
 
             return combatEntity;
         }

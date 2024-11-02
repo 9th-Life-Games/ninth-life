@@ -1,16 +1,10 @@
-[gd_scene load_steps=12 format=3 uid="uid://cruxuu5e8mkvj"]
+[gd_scene load_steps=6 format=3 uid="uid://cruxuu5e8mkvj"]
 
 [ext_resource type="Script" path="res://scripts/game/Game.cs" id="1_uqf54"]
 [ext_resource type="Texture2D" uid="uid://ia53v7kydn0a" path="res://assets/Backgrounds/Combat/Background_Dungeon_v2.png" id="2_c8b80"]
 [ext_resource type="Texture2D" uid="uid://jk2iywr57p1j" path="res://assets/Backgrounds/Combat/Brick-Floor-Player.png" id="3_sjmhi"]
 [ext_resource type="Texture2D" uid="uid://lrq3oke7kl1x" path="res://assets/Backgrounds/Combat/brick-floor-enemy.png" id="4_751si"]
 [ext_resource type="Script" path="res://scripts/game/CombatManager.cs" id="5_epdu6"]
-[ext_resource type="Texture2D" uid="uid://cc314pdpkdurp" path="res://assets/Backgrounds/Combat/Class-1-box.png" id="6_g5qwa"]
-[ext_resource type="Texture2D" uid="uid://c66duv2713bhr" path="res://assets/Backgrounds/Combat/Class-2-box.png" id="7_fxfyw"]
-[ext_resource type="Texture2D" uid="uid://yhd3spmlscdr" path="res://assets/Backgrounds/Combat/weapon-box.png" id="8_o3xhv"]
-[ext_resource type="Texture2D" uid="uid://chu0wf3fht5om" path="res://assets/Backgrounds/Combat/Armor-box.png" id="9_oin2g"]
-[ext_resource type="Texture2D" uid="uid://duj81uhg28odl" path="res://assets/Backgrounds/Combat/discard-box.png" id="10_gwdnt"]
-[ext_resource type="Texture2D" uid="uid://be2rpvnrogs0u" path="res://assets/Backgrounds/Combat/In-play-Box.png" id="11_bir5j"]
 
 [node name="Game" type="Node2D"]
 script = ExtResource("1_uqf54")
@@ -29,32 +23,6 @@ texture = ExtResource("3_sjmhi")
 [node name="EnemyFloor" type="Sprite2D" parent="Background/Floor"]
 position = Vector2(359, -4.5)
 texture = ExtResource("4_751si")
-
-[node name="PlayerBoard" type="Node2D" parent="Background"]
-
-[node name="Class-1-box" type="Sprite2D" parent="Background/PlayerBoard"]
-position = Vector2(-99, 32)
-texture = ExtResource("6_g5qwa")
-
-[node name="Class-2-box" type="Sprite2D" parent="Background/PlayerBoard"]
-position = Vector2(-6, 33)
-texture = ExtResource("7_fxfyw")
-
-[node name="Weapon-box" type="Sprite2D" parent="Background/PlayerBoard"]
-position = Vector2(-99, 106)
-texture = ExtResource("8_o3xhv")
-
-[node name="Armor-box" type="Sprite2D" parent="Background/PlayerBoard"]
-position = Vector2(-5, 106)
-texture = ExtResource("9_oin2g")
-
-[node name="Discard-box" type="Sprite2D" parent="Background/PlayerBoard"]
-position = Vector2(-193, 64)
-texture = ExtResource("10_gwdnt")
-
-[node name="In-play-box" type="Sprite2D" parent="Background/PlayerBoard"]
-position = Vector2(138, 63)
-texture = ExtResource("11_bir5j")
 
 [node name="CombatManager" type="Node2D" parent="."]
 script = ExtResource("5_epdu6")

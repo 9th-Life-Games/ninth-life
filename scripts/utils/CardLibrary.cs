@@ -61,45 +61,40 @@ public partial class CardLibrary : Node
                 Card card = (Card)cardScene.Instantiate();
                 card.Name = key;
 
-                card.SuitType =
-                    suit.SubType != null
-                        ? suit.SubType switch
-                        {
-                            "core" => SuitType.Core,
-                            "talent" => SuitType.Talent,
-                            _ => card.SuitType
-                        }
-                        : suit.Type switch
-                        {
-                            "armor" => SuitType.Armor,
-                            "weapon" => SuitType.Weapon,
-                            _ => card.SuitType
-                        };
+                card.SetSuitType(suit.SubType != null
+                    ? suit.SubType switch
+                    {
+                        "core" => SuitType.Core,
+                        "talent" => SuitType.Talent,
+                        _ => card.SuitType
+                    }
+                    : suit.Type switch
+                    {
+                        "armor" => SuitType.Armor,
+                        "weapon" => SuitType.Weapon,
+                        _ => card.SuitType
+                    });
 
                 switch (number)
                 {
                     case 1:
                         cardImg = cardImg.Replace("1", "ace");
-                        card.NumericValue = 23;
-                        card.IsFaceCard = true;
+                        card.SetNumericValue(23);
                         break;
                     case 11:
                         cardImg = cardImg.Replace("11", "jack");
-                        card.NumericValue = 20;
-                        card.IsFaceCard = true;
+                        card.SetNumericValue(20);
                         break;
                     case 12:
                         cardImg = cardImg.Replace("12", "queen");
-                        card.NumericValue = 21;
-                        card.IsFaceCard = true;
+                        card.SetNumericValue(21);
                         break;
                     case 13:
                         cardImg = cardImg.Replace("13", "king");
-                        card.NumericValue = 22;
-                        card.IsFaceCard = true;
+                        card.SetNumericValue(22);
                         break;
                     default:
-                        card.NumericValue = number;
+                        card.SetNumericValue(number);
                         break;
                 }
 

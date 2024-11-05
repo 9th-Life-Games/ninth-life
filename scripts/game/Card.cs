@@ -8,31 +8,78 @@ public partial class Card : Sprite2D
     [Signal]
     public delegate void CardLeftTreeEventHandler(Card card);
 
+    public enum CardMode
+    {
+        Enabled,
+        Disabled,
+        Display
+    }
+
+
     private AnimationPlayer _animationPlayer;
     private Button _button;
+    private bool _clickDisabled;
     private CardState _currentState = CardState.Idle;
     private bool _isButtonVisible;
-    public bool ClickDisabled = false;
 
-    public string CardName { get; set; }
-
-    public bool IsFaceCard { get; set; }
-
-    public int NumericValue { get; set; }
-
-    public CardLibrary.SuitType SuitType { get; set; }
+    public string CardName => $"{SuitType}: {NumericValue}";
+    public CardLibrary.SuitType SuitType { get; private set; }
+    public int NumericValue { get; private set; }
+    public bool IsFaceCard { get; private set; }
 
     public override void _Ready()
     {
-        TreeEntered += OnTreeEntered;
-
-        _button = GetNode<Button>("Button");
+        _button ??= GetNode<Button>("Button");
         _button.MouseEntered += OnHoverIn;
         _button.MouseExited += OnHoverOut;
         _button.Pressed += OnExit;
 
         _animationPlayer = GetNode<AnimationPlayer>("AnimationPlayer");
         _animationPlayer.AnimationFinished += OnAnimationFinished;
+    }
+
+    public void Initialize(CardLibrary.SuitType suitType, int numericValue, bool isFaceCard)
+    {
+        SuitType = suitType;
+        NumericValue = numericValue;
+        IsFaceCard = isFaceCard;
+    }
+
+    public void SetSuitType(CardLibrary.SuitType suitType)
+    {
+        SuitType = suitType;
+    }
+
+    public void SetNumericValue(int numericValue)
+    {
+        NumericValue = numericValue;
+        IsFaceCard = numericValue > 10;
+    }
+
+    public void SetMode(CardMode mode, bool playEnterAnimation = false)
+    {
+        _button ??= GetNode<Button>("Button");
+
+        switch (mode)
+        {
+            case CardMode.Enabled:
+                _button.Visible = true;
+                _clickDisabled = false;
+                break;
+            case CardMode.Disabled:
+                _button.Visible = false;
+                _clickDisabled = false;
+                break;
+            case CardMode.Display:
+                _button.Visible = true;
+                _clickDisabled = true;
+                break;
+        }
+
+        if (playEnterAnimation)
+        {
+            _currentState = CardState.Enter;
+        }
     }
 
     public void DisableCard()
@@ -43,11 +90,6 @@ public partial class Card : Sprite2D
     public void EnableCard()
     {
         _button.Visible = true;
-    }
-
-    private void OnTreeEntered()
-    {
-        _currentState = CardState.Enter;
     }
 
     public override void _Process(double delta)
@@ -83,7 +125,7 @@ public partial class Card : Sprite2D
 
     private void OnExit()
     {
-        if (!ClickDisabled)
+        if (!_clickDisabled)
         {
             _currentState = CardState.Exit;
             _button.MouseEntered -= OnHoverIn;

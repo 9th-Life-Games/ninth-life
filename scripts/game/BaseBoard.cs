@@ -103,7 +103,7 @@ public partial class BaseBoard : Node2D
         }
         else
         {
-            Card inPlayCard = card.DuplicateCard(false, true);
+            Card inPlayCard = card.DuplicateCard(Card.CardMode.Disabled, true);
             _inPlayBox.AddChild(inPlayCard);
             PositionInPlayCards();
         }
@@ -117,7 +117,7 @@ public partial class BaseBoard : Node2D
             _cardPiles[suitType].Remove(cardToDiscard);
 
             // Capture the card in a local variable for the closure
-            Card discardedCard = cardToDiscard.DuplicateCard(false, true);
+            Card discardedCard = cardToDiscard.DuplicateCard(Card.CardMode.Disabled, true);
 
             // Create sequential delays
             GetTree().CreateTimer(0.5f * i).Timeout += () =>

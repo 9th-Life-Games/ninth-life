@@ -16,7 +16,7 @@ public static class Extensions
     public static Card DuplicateCard(this Card card, Card.CardMode mode = Card.CardMode.Disabled,
         bool playEnterAnimation = false)
     {
-        PackedScene cardScene = GD.Load<PackedScene>("res://scenes/card.tscn");
+        PackedScene cardScene = ResourceManager.Load<PackedScene>("res://scenes/card.tscn");
         Card newCard = (Card)cardScene.Instantiate();
         newCard.Texture = card.Texture;
         newCard.Initialize(card.SuitType, card.NumericValue, card.IsFaceCard);

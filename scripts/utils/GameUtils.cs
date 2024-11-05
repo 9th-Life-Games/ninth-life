@@ -19,21 +19,21 @@ public partial class GameUtils : Node
     )
     {
         Player combatEntity = (Player)
-            GD.Load<PackedScene>("res://scenes/player.tscn").Instantiate();
+            ResourceManager.Load<PackedScene>("res://scenes/player.tscn").Instantiate();
         combatEntity.IsAlly = isAlly;
         combatEntity.PlayerName = name;
 
         if (isAlly)
         {
             combatEntity.PlayerBoard = (BaseBoard)
-                GD.Load<PackedScene>("res://scenes/player_board.tscn").Instantiate();
+                ResourceManager.Load<PackedScene>("res://scenes/player_board.tscn").Instantiate();
             combatEntity.BoardHiddenPosition = new Vector2(480, 575);
             combatEntity.BoardActivePosition = new Vector2(480, 272);
         }
         else
         {
             combatEntity.PlayerBoard = (BaseBoard)
-                GD.Load<PackedScene>("res://scenes/enemy_board.tscn").Instantiate();
+                ResourceManager.Load<PackedScene>("res://scenes/enemy_board.tscn").Instantiate();
             combatEntity.BoardHiddenPosition = new Vector2(576, -155);
             combatEntity.BoardActivePosition = new Vector2(576, 95);
         }

@@ -44,7 +44,8 @@ public partial class BaseBoard : Node2D
 
     private void OnButtonPressed(Sprite2D cardBox)
     {
-        DisplayCards displayCards = GD.Load<PackedScene>("res://scenes/display_cards.tscn").Instantiate<DisplayCards>();
+        DisplayCards displayCards = ResourceManager.Load<PackedScene>("res://scenes/display_cards.tscn")
+            .Instantiate<DisplayCards>();
         displayCards.SetCardsRoot(cardBox);
         displayCards.SetIsAlly(GetName() == "PlayerBoard");
         GetTree().GetRoot().GetNode<Node2D>("Game").AddChild(displayCards);
@@ -140,6 +141,7 @@ public partial class BaseBoard : Node2D
     private void PositionInPlayCards()
     {
         List<Card> cards = _inPlayBox.GetChildren().OfType<Card>().ToList();
+
         if (cards.Count == 0)
         {
             return;

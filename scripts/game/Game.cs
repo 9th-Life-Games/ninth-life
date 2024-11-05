@@ -1,4 +1,5 @@
 using Godot;
+using NinthLife.scripts.utils;
 
 namespace NinthLife.scripts.game;
 
@@ -12,7 +13,7 @@ public partial class Game : Node2D
     {
         if (@event is InputEventKey { Pressed: true, Keycode: Key.Escape })
         {
-            GetTree().Quit();
+            CleanupAndQuit();
         }
     }
 
@@ -29,13 +30,20 @@ public partial class Game : Node2D
         _combatManager.NextTurn();
     }
 
-    public override void _Notification(int what)
+    private void CleanupAndQuit()
     {
-        if (what == NotificationWMCloseRequest)
+        Logger.Debug("Game cleanup");
+        // Clean up all game entities
+        foreach (Player player in GameUtils.CombatEntities)
         {
-            // Clean up before quitting
-            GetTree().Root.PropagateNotification((int)NotificationWMCloseRequest);
-            GetTree().Quit();
+            player.QueueFree();
         }
+
+        GameUtils.CombatEntities.Clear();
+
+        // Clean up resources
+        ResourceManager.Cleanup();
+
+        GetTree().Quit();
     }
 }

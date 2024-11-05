@@ -57,7 +57,7 @@ public partial class CardLibrary : Node
             for (int number = 1; number <= 13; number++)
             {
                 string cardImg = $"res://assets/Card Art/{suit.Type}/{key}/{number}_{key}.png";
-                PackedScene cardScene = GD.Load<PackedScene>("res://scenes/card.tscn");
+                PackedScene cardScene = ResourceManager.Load<PackedScene>("res://scenes/card.tscn");
                 Card card = (Card)cardScene.Instantiate();
                 card.Name = key;
 
@@ -98,7 +98,7 @@ public partial class CardLibrary : Node
                         break;
                 }
 
-                card.Texture = GD.Load<Texture2D>(cardImg);
+                card.Texture = ResourceManager.Load<Texture2D>(cardImg);
                 card.GetNode<Button>("Button").Visible = false;
                 suit.Cards.Add(card);
             }

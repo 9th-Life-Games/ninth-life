@@ -168,14 +168,14 @@ public partial class MainMenu : Control
     {
         _skull = GameUtils.InstantiateCombatEntity(
             "Skull",
-            GD.Load<Texture>("res://assets/Character Sprites/Skull/skull_sprite.png"),
+            ResourceManager.Load<Texture>("res://assets/Character Sprites/Skull/skull_sprite.png"),
             _skullPos,
             true
         );
 
         _hope = GameUtils.InstantiateCombatEntity(
             "Hope",
-            GD.Load<Texture>("res://assets/Character Sprites/Hope/hope_sprite.png"),
+            ResourceManager.Load<Texture>("res://assets/Character Sprites/Hope/hope_sprite.png"),
             _hopePos,
             true,
             1
@@ -183,7 +183,7 @@ public partial class MainMenu : Control
 
         _goblin = GameUtils.InstantiateCombatEntity(
             "Goblin",
-            GD.Load<Texture>(
+            ResourceManager.Load<Texture>(
                 "res://assets/Character Sprites/enemy/goblin/goblin_sprite_rs.png"
             ),
             _goblinPos
@@ -191,7 +191,7 @@ public partial class MainMenu : Control
 
         _goblinTwo = GameUtils.InstantiateCombatEntity(
             "Goblin 2",
-            GD.Load<Texture>(
+            ResourceManager.Load<Texture>(
                 "res://assets/Character Sprites/enemy/goblin/goblin_sprite_rs_2.png"
             ),
             _goblinTwoPos

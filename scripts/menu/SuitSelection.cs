@@ -1,21 +1,18 @@
 using Godot;
 
-namespace NinthLife.scripts.menu
+namespace NinthLife.scripts.menu;
+
+[GlobalClass]
+public partial class SuitSelection : Node
 {
-    [GlobalClass]
-    public partial class SuitSelection : Node
+    [Signal]
+    public delegate void SuitSelectedEventHandler(string suitName);
+
+    public string SelectedSuit { get; private set; }
+
+    public void SetSelectedSuit(string suitName)
     {
-        // Signal to indicate that the user has selected a suit for the weapon
-        [Signal]
-        public delegate void SuitSelectedEventHandler(string suitName);
-
-        public string SelectedSuit { get; private set; }
-
-        // Method to update the selected suit and emit the signal
-        public void SetSelectedSuit(string suitName)
-        {
-            SelectedSuit = suitName;
-            _ = EmitSignal(SignalName.SuitSelected, SelectedSuit);
-        }
+        SelectedSuit = suitName;
+        _ = EmitSignal(SignalName.SuitSelected, SelectedSuit);
     }
 }

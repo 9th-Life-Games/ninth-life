@@ -1,218 +1,316 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
+using NinthLife.scripts.utils;
 
-namespace NinthLife.scripts.game
+namespace NinthLife.scripts.game;
+
+public partial class Player : Node2D
 {
-    public partial class Player : Node2D
+    [Signal]
+    public delegate void EnemyFinishedTurnEventHandler();
+
+    [Signal]
+    public delegate void PlayerFinishedDrawingEventHandler();
+
+    private const int HandSize = 9;
+    private const float AnimationSpeed = .25f;
+    private StringName _combatEntitiesAdded;
+    private int _currentCardPlays;
+    private int _currentHealth;
+    private Hand _hand;
+    private int _initiativeBonus;
+
+    private int _maxHealth;
+    private int _totalCardPlays = 2;
+
+    public List<Card> Deck { get; } = new();
+
+    public BaseBoard PlayerBoard { get; set; }
+    public Polygon2D TurnIndicator { get; set; }
+    public Vector2 BoardActivePosition { get; set; }
+    public Vector2 BoardHiddenPosition { get; set; }
+    public bool IsAlly { get; set; }
+    public int Initiative { get; private set; }
+    public string PlayerName { get; set; }
+
+    // Called when the node enters the scene tree for the first time.
+    public override void _Ready()
     {
-        [Signal]
-        public delegate void PlayerFinishedDrawingEventHandler();
+        _hand = GetNode<Hand>("Hand");
+        _hand.SetPlayerBoard(PlayerBoard);
 
-        private const int HandSize = 9;
-        private const float AnimationSpeed = .25f;
-        private StringName _combatEntitiesAdded;
-        private int _currentCardPlays;
-        private Hand _hand;
-        private int _totalCardPlays = 2;
+        TurnIndicator = GetNode<Polygon2D>("TurnIndicator");
+        TurnIndicator.Polygon = new Vector2[] { new(-10, 0), new(10, 0), new(0, -20) };
+        TurnIndicator.Rotate(Mathf.DegToRad(180));
 
-        public List<Card> Deck { get; } = new();
+        PlayerBoard.GetNode<Label>("Label").Text = $"{PlayerName}'s Board";
 
-        public BaseBoard PlayerBoard { get; set; }
-        public List<Card> Discard { get; } = new();
-        public Polygon2D TurnIndicator { get; set; }
-        public Vector2 BoardActivePosition { get; set; }
-        public Vector2 BoardHiddenPosition { get; set; }
-        public bool IsAlly { get; set; }
-        public int Initiative { get; private set; }
-        public int InitiativeBonus { get; set; }
-        public string PlayerName { get; set; }
+        DrawCards(HandSize, .01);
+    }
 
-        public int MaxHealth { get; private set; }
-        public int CurrentHealth { get; private set; }
+    public void StartTurn()
+    {
+        TurnIndicator.Visible = true;
+        int amountToDraw = HandSize - _hand.GetChildren().Count;
+        DrawCards(amountToDraw, .5);
 
-        // Called when the node enters the scene tree for the first time.
-        public override void _Ready()
+        GetTree().CreateTimer(amountToDraw * .6).Timeout += () =>
         {
-            _hand = GetNode<Hand>("Hand");
-
-            TurnIndicator = GetNode<Polygon2D>("TurnIndicator");
-            TurnIndicator.Polygon = new Vector2[] { new(-10, 0), new(10, 0), new(0, -20) };
-            TurnIndicator.Rotate(Mathf.DegToRad(180));
-
-            PlayerBoard.GetNode<Label>("Label").Text = $"{PlayerName}'s Board";
-
-            DrawCards(HandSize, .01);
-        }
-
-        public void StartTurn()
-        {
-            TurnIndicator.Visible = true;
-            int amountToDraw = HandSize - _hand.GetChildren().Count;
-            DrawCards(amountToDraw, .5);
-
-            GetTree().CreateTimer(amountToDraw * .6).Timeout += () => _hand.EnableCards();
-        }
-
-        public void EndTurn()
-        {
-            TurnIndicator.Visible = false;
-        }
-
-        public void SlideHandIn()
-        {
-            Tween handTween = GetTree().CreateTween();
-            _ = handTween.TweenProperty(
-                _hand,
-                "global_position:y",
-                GlobalPosition.Y + 500,
-                AnimationSpeed
-            );
-            handTween.Finished += delegate
+            _hand.EnableCards();
+            if (!IsAlly)
             {
-                _hand.PositionCards();
-            };
-        }
-
-        public void SlideHandOut()
-        {
-            Tween handTween = GetTree().CreateTween();
-            _hand.DisableCards();
-            _hand.CollapseHand();
-            _ = handTween.TweenProperty(
-                _hand,
-                "global_position:y",
-                GlobalPosition.Y + 750,
-                AnimationSpeed
-            );
-        }
-
-        public void SlideBoardIn()
-        {
-            Tween boardTween = GetTree().CreateTween();
-            _ = boardTween.TweenProperty(
-                PlayerBoard,
-                "global_position:y",
-                GlobalPosition.Y + BoardActivePosition.Y,
-                AnimationSpeed
-            );
-        }
-
-        public void SlideBoardOut()
-        {
-            Tween boardTween = GetTree().CreateTween();
-            _ = boardTween.TweenProperty(
-                PlayerBoard,
-                "global_position:y",
-                GlobalPosition.Y + BoardHiddenPosition.Y,
-                AnimationSpeed
-            );
-        }
-
-        public void SlideHandDisabled()
-        {
-            Tween handTween = GetTree().CreateTween();
-            _ = handTween.TweenProperty(
-                _hand,
-                "global_position:y",
-                GlobalPosition.Y + 575,
-                AnimationSpeed
-            );
-            handTween.Finished += delegate
-            {
-                _hand.DisableCards();
-                _hand.PositionCards();
-            };
-        }
-
-        public void ShowBoard()
-        {
-            Tween boardTween = GetTree().CreateTween();
-            _ = boardTween.TweenProperty(
-                PlayerBoard,
-                "global_position:y",
-                GlobalPosition.Y + 650,
-                AnimationSpeed
-            );
-        }
-
-        public void EnablePlayerHand()
-        {
-            PlayerFinishedDrawing += _hand.EnableCards;
-        }
-
-        public async void DrawCards(int x, double delay = AnimationSpeed)
-        {
-            for (int i = 0; i < x; i++)
-            {
-                _ = await ToSignal(GetTree().CreateTimer(delay), "timeout");
-                DrawCard();
-                _hand.PositionCards();
+                EnemyPlayHand();
             }
-            _ = EmitSignal(SignalName.PlayerFinishedDrawing);
-        }
+        };
+    }
 
-        // Called every frame. 'delta' is the elapsed time since the previous frame.
-        public override void _Process(double delta) { }
+    public void EndTurn()
+    {
+        TurnIndicator.Visible = false;
+    }
 
-        // Add a card to the player's deck
-        public void AddCardToDeck(Card card)
+    public void EnemyPlayHand()
+    {
+        List<Card> cardsInHand = _hand.GetChildren().OfType<Card>().ToList();
+
+        // Filter out face cards
+        List<Card> nonFaceCards = cardsInHand.Where(card => !card.IsFaceCard).ToList();
+
+        // Group cards by suit
+        Dictionary<CardLibrary.SuitType, List<Card>> cardsBySuit = nonFaceCards
+            .GroupBy(card => card.SuitType)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        // Define suit priority (highest to lowest)
+        CardLibrary.SuitType[] suitPriority =
         {
-            Deck.Add(card);
-        }
+            CardLibrary.SuitType.Core, CardLibrary.SuitType.Talent, CardLibrary.SuitType.Weapon,
+            CardLibrary.SuitType.Armor
+        };
 
-        public void CalculateInitiative()
-        {
-            Random rand = new();
-            Initiative = rand.Next(100) + 1 + InitiativeBonus;
-        }
+        Card card1 = null;
+        Card card2 = null;
+        int bestSum = int.MaxValue;
 
-        // Draw a card from the deck
-        public void DrawCard()
+        // Check each suit in priority order
+        foreach (CardLibrary.SuitType suitType in suitPriority)
         {
-            if (Deck.Count <= 0)
+            if (!cardsBySuit.ContainsKey(suitType) || cardsBySuit[suitType].Count < 2)
             {
-                return;
+                continue;
             }
 
-            Card drawnCard = Deck[0];
-            Deck.RemoveAt(0);
-            AddCardToHand(drawnCard);
-        }
+            List<Card> suitCards = cardsBySuit[suitType];
 
-        // Add a card to the player's hand
-        public void AddCardToHand(Card card)
-        {
-            _hand.AddChild(card);
-        }
-
-        // Add a card to the player's discard
-        public void AddCardToDiscard(Card card)
-        {
-            Discard.Add(card);
-        }
-
-        public void ShuffleDeck(int repeat)
-        {
-            for (int index = 0; index < repeat; index++)
+            // Check all pairs of cards in this suit
+            for (int i = 0; i < suitCards.Count - 1; i++)
             {
-                Random rng = new();
-
-                // Start from the last card and swap it with a random card before it
-                for (int i = Deck.Count - 1; i > 0; i--)
+                for (int j = i + 1; j < suitCards.Count; j++)
                 {
-                    int j = rng.Next(i + 1);
-                    (Deck[i], Deck[j]) = (Deck[j], Deck[i]);
+                    int sum = suitCards[i].NumericValue + suitCards[j].NumericValue;
+
+                    // If sum is >= 10 and less than our current best sum
+                    if (sum >= 10 && sum < bestSum)
+                    {
+                        bestSum = sum;
+                        card1 = suitCards[i];
+                        card2 = suitCards[j];
+                    }
                 }
             }
+
+            // If we found a valid pair in this suit, stop looking
+            if (card1 != null && card2 != null)
+            {
+                break;
+            }
         }
 
-        public override void _ExitTree()
+        // If we found a valid pair, play them
+        if (card1 != null && card2 != null)
         {
-            foreach (Card card in Deck)
+            Logger.Debug(
+                $"Playing {card1.NumericValue} and {card2.NumericValue} from {card1.SuitType} suit for total of {bestSum}");
+            GetTree().CreateTimer(.5).Timeout +=
+                () => card1.GetNode<Button>("Button").EmitSignal(BaseButton.SignalName.Pressed);
+            GetTree().CreateTimer(1.5).Timeout += () =>
             {
-                card.QueueFree();
+                card2.GetNode<Button>("Button").EmitSignal(BaseButton.SignalName.Pressed);
+                EmitSignal(SignalName.EnemyFinishedTurn);
+            };
+        }
+        else
+        {
+            card1 = cardsInHand[0];
+            card2 = cardsInHand[1];
+
+            Logger.Debug(
+                $"Playing random cards: {card1.NumericValue} from {card1.SuitType} and {card2.NumericValue} from {card2.SuitType}");
+            GetTree().CreateTimer(.5).Timeout +=
+                () => card1.GetNode<Button>("Button").EmitSignal(BaseButton.SignalName.Pressed);
+            GetTree().CreateTimer(1.5).Timeout += () =>
+            {
+                card2.GetNode<Button>("Button").EmitSignal(BaseButton.SignalName.Pressed);
+                EmitSignal(SignalName.EnemyFinishedTurn);
+            };
+        }
+    }
+
+    public void SlideHandIn()
+    {
+        Tween handTween = GetTree().CreateTween();
+        handTween.TweenProperty(
+            _hand,
+            "global_position:y",
+            GlobalPosition.Y + 500,
+            AnimationSpeed
+        );
+        handTween.Finished += delegate
+        {
+            _hand.PositionCards();
+        };
+    }
+
+    public void SlideHandOut()
+    {
+        Tween handTween = GetTree().CreateTween();
+        _hand.DisableCards();
+        _hand.CollapseHand();
+        handTween.TweenProperty(
+            _hand,
+            "global_position:y",
+            GlobalPosition.Y + 750,
+            AnimationSpeed
+        );
+    }
+
+    public void SlideBoardIn()
+    {
+        Tween boardTween = GetTree().CreateTween();
+        boardTween.TweenProperty(
+            PlayerBoard,
+            "global_position:y",
+            GlobalPosition.Y + BoardActivePosition.Y,
+            AnimationSpeed
+        );
+    }
+
+    public void SlideBoardOut()
+    {
+        Tween boardTween = GetTree().CreateTween();
+        boardTween.TweenProperty(
+            PlayerBoard,
+            "global_position:y",
+            GlobalPosition.Y + BoardHiddenPosition.Y,
+            AnimationSpeed
+        );
+    }
+
+    public void SlideHandDisabled()
+    {
+        Tween handTween = GetTree().CreateTween();
+        handTween.TweenProperty(
+            _hand,
+            "global_position:y",
+            GlobalPosition.Y + 575,
+            AnimationSpeed
+        );
+        handTween.Finished += delegate
+        {
+            _hand.DisableCards();
+            _hand.PositionCards();
+        };
+    }
+
+    private void ShowBoard()
+    {
+        Tween boardTween = GetTree().CreateTween();
+        boardTween.TweenProperty(
+            PlayerBoard,
+            "global_position:y",
+            GlobalPosition.Y + 650,
+            AnimationSpeed
+        );
+    }
+
+    public void EnablePlayerHand()
+    {
+        PlayerFinishedDrawing += _hand.EnableCards;
+    }
+
+    private async void DrawCards(int x, double delay = AnimationSpeed)
+    {
+        for (int i = 0; i < x; i++)
+        {
+            await ToSignal(GetTree().CreateTimer(delay), "timeout");
+            DrawCard();
+            _hand.PositionCards();
+        }
+
+        EmitSignal(SignalName.PlayerFinishedDrawing);
+    }
+
+    // Called every frame. 'delta' is the elapsed time since the previous frame.
+    public override void _Process(double delta) { }
+
+    // Add a card to the player's deck
+    private void AddCardToDeck(Card card)
+    {
+        Deck.Add(card);
+    }
+
+    public void CalculateInitiative()
+    {
+        if (PlayerName == "Goblin")
+        {
+            _initiativeBonus += 100;
+        }
+
+        Random rand = new();
+        Initiative = rand.Next(100) + 1 + _initiativeBonus;
+    }
+
+    // Draw a card from the deck
+    private void DrawCard()
+    {
+        if (Deck.Count <= 0)
+        {
+            return;
+        }
+
+        Card drawnCard = Deck[0];
+        Deck.RemoveAt(0);
+        AddCardToHand(drawnCard);
+    }
+
+    // Add a card to the player's hand
+    private void AddCardToHand(Card card)
+    {
+        _hand.AddChild(card);
+    }
+
+    public void ShuffleDeck(int repeat)
+    {
+        for (int index = 0; index < repeat; index++)
+        {
+            Random rng = new();
+
+            // Start from the last card and swap it with a random card before it
+            for (int i = Deck.Count - 1; i > 0; i--)
+            {
+                int j = rng.Next(i + 1);
+                (Deck[i], Deck[j]) = (Deck[j], Deck[i]);
             }
+        }
+    }
+
+    public override void _ExitTree()
+    {
+        foreach (Card card in Deck)
+        {
+            card.QueueFree();
         }
     }
 }

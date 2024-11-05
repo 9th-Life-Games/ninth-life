@@ -3,134 +3,149 @@ using System.Linq;
 using Godot;
 using NinthLife.scripts.utils;
 
-namespace NinthLife.scripts.game
+namespace NinthLife.scripts.game;
+
+public partial class CombatManager : Node2D
 {
-    public partial class CombatManager : Node2D
+    private readonly List<Player> _turnOrder = new();
+
+    private Player _currentPlayer;
+    private Player _firstAlly;
+    private Player _firstEnemy;
+    private Player _lastAllyPlayer;
+    private Player _lastEnemyPlayer;
+
+    private Button _nextButton;
+
+    public override void _Ready()
     {
-        private readonly List<Player> _turnOrder = new();
-
-        private Player _firstAlly;
-        private Player _firstEnemy;
-        private Player _lastAllyPlayer;
-        private Player _lastEnemyPlayer;
-
-        public Player CurrentPlayer { get; set; }
-
-        public override void _Ready()
-        {
-            foreach (
-                Player player in GameUtils.CombatEntities.OrderByDescending(static player =>
-                    player.Initiative
-                )
+        _nextButton = GetNode<Button>("../Button");
+        foreach (
+            Player player in GameUtils.CombatEntities.OrderByDescending(static player =>
+                player.Initiative
             )
-            {
-                CurrentPlayer ??= player;
-                _turnOrder.Add(player);
-                AddChild(player);
-            }
-
-            CurrentPlayer.TurnIndicator.Visible = true;
-
-            foreach (Player player in GetChildren().OfType<Player>())
-            {
-                if (player.IsAlly)
-                {
-                    _firstAlly ??= player;
-                }
-                else
-                {
-                    _firstEnemy ??= player;
-                }
-            }
-            if (CurrentPlayer.IsAlly)
-            {
-                CurrentPlayer.SlideHandIn();
-                CurrentPlayer.EnablePlayerHand();
-                _lastAllyPlayer = CurrentPlayer;
-            }
-            else
-            {
-                _firstAlly.SlideHandDisabled();
-                _lastEnemyPlayer = CurrentPlayer;
-            }
-
-            _firstAlly.SlideBoardIn();
-            _firstEnemy.SlideBoardIn();
-        }
-
-        public void NextTurn()
+        )
         {
-            Player nextPlayer = _turnOrder[1];
-
-            // Track last enemy if current player is an enemy
-            if (CurrentPlayer.IsAlly)
-            {
-                _lastAllyPlayer = CurrentPlayer;
-            }
-            else
-            {
-                _lastEnemyPlayer = CurrentPlayer;
-            }
-
-            // Handle current player's exit
-            if (!nextPlayer.IsAlly && CurrentPlayer.IsAlly)
-            {
-                CurrentPlayer.SlideHandDisabled();
-            }
-            else
-            {
-                CurrentPlayer.SlideHandOut();
-                // CurrentPlayer.SlideBoardOut(); // Always slide out current player's board
-            }
-
-            // Handle special ally-related transitions
-            if (!CurrentPlayer.IsAlly && nextPlayer.IsAlly)
-            {
-                for (int i = _turnOrder.Count - 1; i >= 0; i--)
-                {
-                    if (!_turnOrder[i].IsAlly)
-                    {
-                        continue;
-                    }
-                    _turnOrder[i].SlideHandOut();
-                    // _turnOrder[i].SlideBoardOut();
-                    break;
-                }
-            }
-
-            // Update and handle enemy board transitions
-            Logger.Debug($"_lastAllyPlayer: {_lastAllyPlayer?.PlayerName}");
-            Logger.Debug($"_lastEnemyPlayer: {_lastEnemyPlayer?.PlayerName}");
-            if (!nextPlayer.IsAlly)
-            {
-                // If there was a previous enemy, hide their board
-                Logger.Debug(
-                    "Next player is an enemy, so slide the last enemies board out so we can slide the next enemies board in"
-                );
-                _lastEnemyPlayer?.SlideBoardOut();
-            }
-            else
-            {
-                Logger.Debug(
-                    "Next player is an ally, so slide the last allies board out so we can slide the next allies board in"
-                );
-                _lastAllyPlayer?.SlideBoardOut();
-            }
-
-            CurrentPlayer.EndTurn();
-            _ = _turnOrder.Remove(CurrentPlayer);
-            _turnOrder.Add(CurrentPlayer);
-            CurrentPlayer = nextPlayer;
-
-            // Handle new player's entrance
-            if (CurrentPlayer.IsAlly)
-            {
-                CurrentPlayer.SlideHandIn();
-            }
-
-            CurrentPlayer.SlideBoardIn();
-
-            CurrentPlayer.StartTurn();
+            _currentPlayer ??= player;
+            _turnOrder.Add(player);
+            AddChild(player);
         }
+
+        _currentPlayer.TurnIndicator.Visible = true;
+
+        foreach (Player player in GetChildren().OfType<Player>())
+        {
+            if (player.IsAlly)
+            {
+                _firstAlly ??= player;
+            }
+            else
+            {
+                _firstEnemy ??= player;
+            }
+        }
+
+        if (_currentPlayer.IsAlly)
+        {
+            _currentPlayer.SlideHandIn();
+            _currentPlayer.EnablePlayerHand();
+            _lastAllyPlayer = _currentPlayer;
+        }
+        else
+        {
+            GetTree().CreateTimer(1).Timeout += _currentPlayer.EnemyPlayHand;
+            _nextButton.Disabled = true;
+            _firstAlly.SlideHandDisabled();
+            _lastEnemyPlayer = _currentPlayer;
+            _currentPlayer.EnemyFinishedTurn += OnEnemyFinishedTurn;
+        }
+
+        _firstAlly.SlideBoardIn();
+        _firstEnemy.SlideBoardIn();
+    }
+
+    public void NextTurn()
+    {
+        // Disconnect the event handler from current player if it's an enemy
+        if (!_currentPlayer.IsAlly)
+        {
+            _currentPlayer.EnemyFinishedTurn -= OnEnemyFinishedTurn;
+        }
+
+        Player nextPlayer = _turnOrder[1];
+
+        // Track last enemy if current player is an enemy
+        if (_currentPlayer.IsAlly)
+        {
+            _lastAllyPlayer = _currentPlayer;
+        }
+        else
+        {
+            _lastEnemyPlayer = _currentPlayer;
+        }
+
+        // Handle current player's exit
+        if (!nextPlayer.IsAlly && _currentPlayer.IsAlly)
+        {
+            _currentPlayer.SlideHandDisabled();
+        }
+        else
+        {
+            _currentPlayer.SlideHandOut();
+        }
+
+        // Handle special ally-related transitions
+        if (!_currentPlayer.IsAlly && nextPlayer.IsAlly)
+        {
+            for (int i = _turnOrder.Count - 1; i >= 0; i--)
+            {
+                if (!_turnOrder[i].IsAlly)
+                {
+                    continue;
+                }
+
+                _turnOrder[i].SlideHandOut();
+                break;
+            }
+        }
+
+        // Update and handle enemy board transitions
+        Logger.Debug($"_lastAllyPlayer: {_lastAllyPlayer?.PlayerName}");
+        Logger.Debug($"_lastEnemyPlayer: {_lastEnemyPlayer?.PlayerName}");
+        if (!nextPlayer.IsAlly)
+        {
+            // If there was a previous enemy, hide their board
+            _lastEnemyPlayer?.SlideBoardOut();
+        }
+        else
+        {
+            _lastAllyPlayer?.SlideBoardOut();
+        }
+
+        _currentPlayer.EndTurn();
+        _turnOrder.Remove(_currentPlayer);
+        _turnOrder.Add(_currentPlayer);
+        _currentPlayer = nextPlayer;
+
+        // Handle new player's entrance
+        if (_currentPlayer.IsAlly)
+        {
+            _nextButton.Disabled = false;
+            _currentPlayer.SlideHandIn();
+        }
+        else
+        {
+            _nextButton.Disabled = true;
+            _currentPlayer.EnemyFinishedTurn += OnEnemyFinishedTurn;
+        }
+
+        _currentPlayer.SlideBoardIn();
+
+        _currentPlayer.StartTurn();
+    }
+
+    private void OnEnemyFinishedTurn()
+    {
+        GetTree().CreateTimer(1.5).Timeout += NextTurn;
     }
 }

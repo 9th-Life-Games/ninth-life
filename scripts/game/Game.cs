@@ -1,35 +1,41 @@
 using Godot;
 
-namespace NinthLife.scripts.game
+namespace NinthLife.scripts.game;
+
+public partial class Game : Node2D
 {
-    public partial class Game : Node2D
+    private Button _button;
+
+    private CombatManager _combatManager;
+
+    public override void _UnhandledInput(InputEvent @event)
     {
-        private Button _button;
-
-        private CombatManager _combatManager;
-
-        public override void _UnhandledInput(InputEvent @event)
+        if (@event is InputEventKey { Pressed: true, Keycode: Key.Escape })
         {
-            if (@event is InputEventKey { Pressed: true, Keycode: Key.Escape })
-            {
-                GetTree().Quit();
-            }
+            GetTree().Quit();
         }
+    }
 
-        // Called when the node enters the scene tree for the first time.
-        public override void _Ready()
+    // Called when the node enters the scene tree for the first time.
+    public override void _Ready()
+    {
+        _button = GetNode<Button>("Button");
+        _combatManager = GetNode<CombatManager>("CombatManager");
+        _button.Pressed += ButtonOnPressed;
+    }
+
+    private void ButtonOnPressed()
+    {
+        _combatManager.NextTurn();
+    }
+
+    public override void _Notification(int what)
+    {
+        if (what == NotificationWMCloseRequest)
         {
-            _button = GetNode<Button>("Button");
-            _combatManager = GetNode<CombatManager>("CombatManager");
-            _button.Pressed += ButtonOnPressed;
+            // Clean up before quitting
+            GetTree().Root.PropagateNotification((int)NotificationWMCloseRequest);
+            GetTree().Quit();
         }
-
-        private void ButtonOnPressed()
-        {
-            _combatManager.NextTurn();
-        }
-
-        // Called every frame. 'delta' is the elapsed time since the previous frame.
-        public override void _Process(double delta) { }
     }
 }

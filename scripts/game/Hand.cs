@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using NinthLife.scripts.utils;
@@ -117,9 +118,15 @@ public partial class Hand : Node2D
 
     public void CollapseHand()
     {
+        List<Card> children = GetChildren().OfType<Card>().ToList();
+        if (children.Count == 0)
+        {
+            return; // Don't create tween if no cards
+        }
+
         Tween tween = GetTree().CreateTween().SetParallel();
 
-        foreach (Node card in GetChildren())
+        foreach (Card card in children)
         {
             tween.TweenProperty(card, "rotation_degrees", 0, AnimationSpeed);
             tween.TweenProperty(
@@ -139,12 +146,10 @@ public partial class Hand : Node2D
 
     public override void _ExitTree()
     {
-        foreach (Node child in GetChildren())
+        foreach (Card card in GetChildren().OfType<Card>())
         {
-            if (child is Card card)
-            {
-                card.QueueFree();
-            }
+            card.Texture = null;
+            card.QueueFree();
         }
     }
 

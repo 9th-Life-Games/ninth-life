@@ -148,6 +148,37 @@ public partial class Card : Sprite2D
         }
     }
 
+    public override void _ExitTree()
+    {
+        // Check if signals are connected before disconnecting
+        if (_button != null)
+        {
+            if (_button.IsConnected("mouse_entered", new Callable(this, nameof(OnHoverIn))))
+            {
+                _button.MouseEntered -= OnHoverIn;
+            }
+
+            if (_button.IsConnected("mouse_exited", new Callable(this, nameof(OnHoverOut))))
+            {
+                _button.MouseExited -= OnHoverOut;
+            }
+
+            if (_button.IsConnected("pressed", new Callable(this, nameof(OnExit))))
+            {
+                _button.Pressed -= OnExit;
+            }
+        }
+
+        if (_animationPlayer != null &&
+            _animationPlayer.IsConnected("animation_finished", new Callable(this, nameof(OnAnimationFinished))))
+        {
+            _animationPlayer.AnimationFinished -= OnAnimationFinished;
+        }
+
+        // Clear resources
+        Texture = null;
+    }
+
     private enum CardState
     {
         Idle,

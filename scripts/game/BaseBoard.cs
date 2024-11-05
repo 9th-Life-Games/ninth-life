@@ -140,6 +140,10 @@ public partial class BaseBoard : Node2D
     private void PositionInPlayCards()
     {
         List<Card> cards = _inPlayBox.GetChildren().OfType<Card>().ToList();
+        if (cards.Count == 0)
+        {
+            return;
+        }
 
         Tween tween = GetTree().CreateTween().SetParallel();
         const float animationSpeed = 0.1f;
@@ -171,5 +175,21 @@ public partial class BaseBoard : Node2D
         // Position the last card directly without tweening
         float lastXPos = -47 + (spacing * (cards.Count - 1));
         cards[^1].Position = new Vector2(lastXPos, 0);
+    }
+
+    public override void _ExitTree()
+    {
+        foreach (List<Card> pile in _cardPiles.Values)
+        {
+            foreach (Card card in pile)
+            {
+                card.Texture = null;
+                card.QueueFree();
+            }
+
+            pile.Clear();
+        }
+
+        _cardPiles.Clear();
     }
 }

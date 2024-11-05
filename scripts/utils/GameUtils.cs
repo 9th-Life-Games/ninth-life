@@ -56,15 +56,18 @@ public partial class GameUtils : Node
 
     public override void _ExitTree()
     {
-        foreach (Card card in CombatEntities.SelectMany(static player => player.Deck))
-        {
-            card.QueueFree();
-        }
-
         foreach (Player player in CombatEntities)
         {
+            foreach (Card card in player.Deck)
+            {
+                card.Texture = null; // Clear texture reference
+                card.QueueFree();
+            }
+
             player.QueueFree();
         }
+
+        CombatEntities.Clear();
     }
 
     public static void PositionCards(Node2D container, bool curved = true, float animationSpeed = 0.1f)
@@ -79,6 +82,13 @@ public partial class GameUtils : Node
         }
 
         List<Card> childList = container.GetChildren().OfType<Card>().ToList();
+
+        // If no cards, don't create a tween at all
+        if (childList.Count == 0)
+        {
+            return;
+        }
+
         Tween tween = container.GetTree().CreateTween().SetParallel();
 
         if (childList.Count <= 1)

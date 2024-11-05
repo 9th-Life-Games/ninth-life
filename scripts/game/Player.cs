@@ -310,7 +310,10 @@ public partial class Player : Node2D
     {
         foreach (Card card in Deck)
         {
+            card.Texture = null;
             card.QueueFree();
         }
+
+        Deck.Clear();
     }
 }

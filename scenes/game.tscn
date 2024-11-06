@@ -27,10 +27,6 @@ texture = ExtResource("4_751si")
 [node name="CombatManager" type="Node2D" parent="."]
 script = ExtResource("5_epdu6")
 
-[node name="Hand" type="Node2D" parent="."]
-visible = false
-position = Vector2(480, 500)
-
 [node name="Button" type="Button" parent="."]
 offset_left = 785.0
 offset_top = 331.0
@@ -38,11 +34,3 @@ offset_right = 919.0
 offset_bottom = 376.0
 theme_override_font_sizes/font_size = 23
 text = "Next Turn"
-
-[node name="FanButton" type="Button" parent="."]
-visible = false
-offset_left = 419.0
-offset_top = 325.0
-offset_right = 538.0
-offset_bottom = 356.0
-text = "Fan Hand"

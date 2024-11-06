@@ -9,7 +9,7 @@ script = ExtResource("1_wps60")
 [node name="Sprite2D" type="Sprite2D" parent="."]
 
 [node name="Hand" type="Node2D" parent="."]
-position = Vector2(480, 650)
+position = Vector2(480, 850)
 script = ExtResource("2_addbm")
 
 [node name="TurnIndicator" type="Polygon2D" parent="."]

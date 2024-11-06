@@ -181,7 +181,7 @@ public partial class Player : Node2D
         handTween.TweenProperty(
             _hand,
             "global_position:y",
-            GlobalPosition.Y + 750,
+            GlobalPosition.Y + 850,
             AnimationSpeed
         );
     }

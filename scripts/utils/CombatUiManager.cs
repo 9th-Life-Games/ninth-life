@@ -16,7 +16,6 @@ public class CombatUiManager
 
     private void ShowBoard(Player player, bool show)
     {
-        SetNextButtonState(!player.IsAlly);
         if (show)
         {
             player.SlideBoardIn();
@@ -105,6 +104,7 @@ public class CombatUiManager
         ShowHand(currentPlayer.IsAlly ? currentPlayer : firstAlly, true, !currentPlayer.IsAlly);
         ShowBoard(firstAlly, true);
         ShowBoard(firstEnemy, true);
+        SetNextButtonState(!currentPlayer.IsAlly);
     }
 
     public void ShowPlayerUi(Player player)
@@ -115,5 +115,6 @@ public class CombatUiManager
         }
 
         ShowBoard(player, true);
+        SetNextButtonState(!player.IsAlly);
     }
 }

@@ -263,10 +263,23 @@ public partial class Player : Node2D
 
     public void CalculateInitiative()
     {
-        if (PlayerName == "Goblin")
+        // Sometimes I want to have better control over the characters turn order for testing
+        switch (PlayerName)
         {
-            _initiativeBonus += 100;
+            case "Skull":
+                // _initiativeBonus += 100;
+                break;
+            case "Hope":
+                // _initiativeBonus += 100;
+                break;
+            case "Goblin":
+                // _initiativeBonus += 100;
+                break;
+            case "Goblin 2":
+                // _initiativeBonus += 100;
+                break;
         }
+
 
         Random rand = new();
         Initiative = rand.Next(100) + 1 + _initiativeBonus;

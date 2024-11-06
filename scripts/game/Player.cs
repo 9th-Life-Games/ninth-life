@@ -280,7 +280,6 @@ public partial class Player : Node2D
                 break;
         }
 
-
         Random rand = new();
         Initiative = rand.Next(100) + 1 + _initiativeBonus;
     }

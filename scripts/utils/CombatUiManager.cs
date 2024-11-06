@@ -14,7 +14,7 @@ public class CombatUiManager
         _nextButton = nextButton;
     }
 
-    private void ShowBoard(Player player, bool show)
+    private static void ShowBoard(Player player, bool show)
     {
         if (show)
         {
@@ -50,7 +50,7 @@ public class CombatUiManager
         _nextButton.Disabled = enabled;
     }
 
-    public void TrackLastPlayer(Player player)
+    private void TrackLastPlayer(Player player)
     {
         if (player.IsAlly)
         {
@@ -82,11 +82,6 @@ public class CombatUiManager
     public void HandleCurrentAllyHandExit(Player currentPlayer, Player nextPlayer)
     {
         TrackLastPlayer(currentPlayer);
-
-        if (!currentPlayer.IsAlly && !nextPlayer.IsAlly)
-        {
-            return;
-        }
 
         if (currentPlayer.IsAlly && !nextPlayer.IsAlly)
         {

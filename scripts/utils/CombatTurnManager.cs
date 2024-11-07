@@ -6,6 +6,8 @@ namespace NinthLife.scripts.utils;
 
 public class CombatTurnManager
 {
+    private readonly List<Player> _allyTurnOrder = new();
+    private readonly List<Player> _enemyTurnOrder = new();
     private readonly List<Player> _turnOrder = new();
     public Player CurrentPlayer { get; private set; }
     public Player FirstAlly { get; private set; }
@@ -21,6 +23,15 @@ public class CombatTurnManager
         {
             CurrentPlayer ??= player;
             _turnOrder.Add(player);
+            if (player.IsAlly)
+            {
+                _allyTurnOrder.Add(player);
+            }
+            else
+            {
+                _enemyTurnOrder.Add(player);
+            }
+
             combatManager.AddChild(player);
         }
 
@@ -47,6 +58,21 @@ public class CombatTurnManager
         return _turnOrder[1];
     }
 
+    public int GetCurrentPlayerIndex()
+    {
+        return _turnOrder.IndexOf(CurrentPlayer);
+    }
+
+    public int GetTurnOrderCount()
+    {
+        return _turnOrder.Count;
+    }
+
+    public Player GetPlayerToPreview(int index)
+    {
+        return _turnOrder[index];
+    }
+
     public Player GetLastAlly()
     {
         return _turnOrder.FindLast(player => player.IsAlly);
@@ -59,5 +85,25 @@ public class CombatTurnManager
         _turnOrder.Add(CurrentPlayer);
         CurrentPlayer = nextPlayer;
         return CurrentPlayer;
+    }
+
+    public Player GetFirstEnemyInTurnOrder()
+    {
+        return _enemyTurnOrder[0];
+    }
+
+    public Player GetLastEnemyInTurnOrder()
+    {
+        return _enemyTurnOrder[^1];
+    }
+
+    public Player GetFirstAllyInTurnOrder()
+    {
+        return _allyTurnOrder[0];
+    }
+
+    public Player GetLastAllyInTurnOrder()
+    {
+        return _allyTurnOrder[^1];
     }
 }

@@ -9,6 +9,9 @@ namespace NinthLife.scripts.game;
 public partial class Player : Node2D
 {
     [Signal]
+    public delegate void AllyHandEnabledEventHandler(bool enabled);
+
+    [Signal]
     public delegate void EnemyFinishedTurnEventHandler();
 
     [Signal]
@@ -24,11 +27,13 @@ public partial class Player : Node2D
 
     private int _maxHealth;
     private int _totalCardPlays = 2;
+    public bool IsHandEnabled { get; private set; }
+    public Polygon2D PreviewIndicator { get; private set; }
 
     public List<Card> Deck { get; } = new();
 
     public BaseBoard PlayerBoard { get; set; }
-    public Polygon2D TurnIndicator { get; set; }
+    public Polygon2D TurnIndicator { get; private set; }
     public Vector2 BoardActivePosition { get; set; }
     public Vector2 BoardHiddenPosition { get; set; }
     public bool IsAlly { get; set; }
@@ -41,27 +46,30 @@ public partial class Player : Node2D
         _hand = GetNode<Hand>("Hand");
         _hand.SetPlayerBoard(PlayerBoard);
 
-        TurnIndicator = GetNode<Polygon2D>("TurnIndicator");
-        TurnIndicator.Polygon = new Vector2[] { new(-10, 0), new(10, 0), new(0, -20) };
-        TurnIndicator.Rotate(Mathf.DegToRad(180));
+        SetIndicators();
 
         PlayerBoard.GetNode<Label>("Label").Text = $"{PlayerName}'s Board";
 
         DrawCards(HandSize, .01);
+        PlayerFinishedDrawing += EnablePlayerHand;
     }
 
     public void StartTurn()
     {
+        DisablePlayerHand();
         TurnIndicator.Visible = true;
         int amountToDraw = HandSize - _hand.GetChildren().Count;
         DrawCards(amountToDraw, .5);
 
         GetTree().CreateTimer(amountToDraw * .6).Timeout += () =>
         {
-            _hand.EnableCards();
             if (!IsAlly)
             {
                 EnemyPlayHand();
+            }
+            else
+            {
+                EnablePlayerHand();
             }
         };
     }
@@ -69,6 +77,23 @@ public partial class Player : Node2D
     public void EndTurn()
     {
         TurnIndicator.Visible = false;
+    }
+
+    private void SetIndicators()
+    {
+        TurnIndicator = GetNode<Polygon2D>("TurnIndicator");
+        TurnIndicator.Polygon = new Vector2[] { new(-10, 0), new(10, 0), new(0, -20) };
+        TurnIndicator.Rotate(Mathf.DegToRad(180));
+
+        PreviewIndicator = GetNode<Polygon2D>("PreviewIndicator");
+        PreviewIndicator.Polygon = new Vector2[] { new(-10, 0), new(10, 0), new(0, -20) };
+        PreviewIndicator.Rotate(Mathf.DegToRad(180));
+    }
+
+
+    public void ShowPreviewIndicator(bool show)
+    {
+        PreviewIndicator.Visible = show;
     }
 
     public void EnemyPlayHand()
@@ -131,31 +156,25 @@ public partial class Player : Node2D
         // If we found a valid pair, play them
         if (card1 != null && card2 != null)
         {
-            Logger.Debug(
+            Logger.Info(
                 $"Playing {card1.NumericValue} and {card2.NumericValue} from {card1.SuitType} suit for total of {bestSum}");
-            GetTree().CreateTimer(.5).Timeout +=
-                () => card1.GetNode<Button>("Button").EmitSignal(BaseButton.SignalName.Pressed);
-            GetTree().CreateTimer(1.5).Timeout += () =>
-            {
-                card2.GetNode<Button>("Button").EmitSignal(BaseButton.SignalName.Pressed);
-                EmitSignal(SignalName.EnemyFinishedTurn);
-            };
         }
         else
         {
             card1 = cardsInHand[0];
             card2 = cardsInHand[1];
 
-            Logger.Debug(
+            Logger.Info(
                 $"Playing random cards: {card1.NumericValue} from {card1.SuitType} and {card2.NumericValue} from {card2.SuitType}");
-            GetTree().CreateTimer(.5).Timeout +=
-                () => card1.GetNode<Button>("Button").EmitSignal(BaseButton.SignalName.Pressed);
-            GetTree().CreateTimer(1.5).Timeout += () =>
-            {
-                card2.GetNode<Button>("Button").EmitSignal(BaseButton.SignalName.Pressed);
-                EmitSignal(SignalName.EnemyFinishedTurn);
-            };
         }
+
+        GetTree().CreateTimer(.5).Timeout +=
+            () => card1.GetNode<Button>("Button").EmitSignal(BaseButton.SignalName.Pressed);
+        GetTree().CreateTimer(1.5).Timeout += () =>
+        {
+            card2.GetNode<Button>("Button").EmitSignal(BaseButton.SignalName.Pressed);
+            EmitSignal(SignalName.EnemyFinishedTurn);
+        };
     }
 
     public void SlideHandIn()
@@ -176,7 +195,7 @@ public partial class Player : Node2D
     public void SlideHandOut()
     {
         Tween handTween = GetTree().CreateTween();
-        _hand.DisableCards();
+        DisablePlayerHand();
         _hand.CollapseHand();
         handTween.TweenProperty(
             _hand,
@@ -219,7 +238,7 @@ public partial class Player : Node2D
         );
         handTween.Finished += delegate
         {
-            _hand.DisableCards();
+            DisablePlayerHand();
             _hand.PositionCards();
         };
     }
@@ -237,7 +256,16 @@ public partial class Player : Node2D
 
     public void EnablePlayerHand()
     {
-        PlayerFinishedDrawing += _hand.EnableCards;
+        IsHandEnabled = true;
+        _hand.EnableCards();
+        EmitSignal(SignalName.AllyHandEnabled, true);
+    }
+
+    private void DisablePlayerHand()
+    {
+        IsHandEnabled = false;
+        _hand.DisableCards();
+        EmitSignal(SignalName.AllyHandEnabled, false);
     }
 
     private async void DrawCards(int x, double delay = AnimationSpeed)
@@ -267,16 +295,16 @@ public partial class Player : Node2D
         switch (PlayerName)
         {
             case "Skull":
-                // _initiativeBonus += 100;
+                _initiativeBonus += 200;
                 break;
             case "Hope":
-                // _initiativeBonus += 100;
+                // _initiativeBonus += 300;
                 break;
             case "Goblin":
-                // _initiativeBonus += 100;
+                // _initiativeBonus += 200;
                 break;
             case "Goblin 2":
-                // _initiativeBonus += 100;
+                // _initiativeBonus += 300;
                 break;
         }
 

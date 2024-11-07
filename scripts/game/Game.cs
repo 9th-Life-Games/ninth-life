@@ -9,9 +9,9 @@ public partial class Game : Node2D
 
     private CombatManager _combatManager;
 
-    public override void _UnhandledInput(InputEvent @event)
+    public override void _Input(InputEvent @event)
     {
-        if (@event is InputEventKey { Pressed: true, Keycode: Key.Escape })
+        if (Input.IsActionJustPressed("quit"))
         {
             CleanupAndQuit();
         }

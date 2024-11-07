@@ -94,23 +94,35 @@ public partial class Logger : Node
     }
 
     // Utility methods for easy access
-    public static void Debug(string message)
+    public static void Debug(string message, bool shouldLog = true)
     {
-        Instance.Log(message, LogLevel.Debug);
+        if (shouldLog)
+        {
+            Instance.Log(message, LogLevel.Debug);
+        }
     }
 
-    public static void Info(string message)
+    public static void Info(string message, bool shouldLog = true)
     {
-        Instance.Log(message);
+        if (shouldLog)
+        {
+            Instance.Log(message);
+        }
     }
 
-    public static void Warning(string message)
+    public static void Warning(string message, bool shouldLog = true)
     {
-        Instance.Log(message, LogLevel.Warning);
+        if (shouldLog)
+        {
+            Instance.Log(message, LogLevel.Warning);
+        }
     }
 
-    public static void Error(string message)
+    public static void Error(string message, bool shouldLog = true)
     {
-        Instance.Log(message, LogLevel.Error);
+        if (shouldLog)
+        {
+            Instance.Log(message, LogLevel.Error);
+        }
     }
 }

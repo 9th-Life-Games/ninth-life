@@ -51,6 +51,10 @@ public partial class GameUtils : Node
         turnIndicator.Position = new Vector2(position.X, position.Y + (-spriteHeight / 2) - 20);
         turnIndicator.Color = isAlly ? new Color("00ff00") : new Color("ff0000");
 
+        Polygon2D previewIndicator = combatEntity.GetNode<Polygon2D>("PreviewIndicator");
+        previewIndicator.Position = new Vector2(position.X, position.Y + (-spriteHeight / 2) - 20);
+        previewIndicator.Color = Colors.Gray;
+
         return combatEntity;
     }
 

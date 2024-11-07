@@ -5,16 +5,16 @@ namespace NinthLife.scripts.utils;
 
 public class CombatUiManager
 {
-    private Player _lastAlly;
-    private Player _lastEnemy;
     private Button _nextButton;
+    public Player LastAlly { get; private set; }
+    public Player LastEnemy { get; private set; }
 
     public void SetNextButton(Button nextButton)
     {
         _nextButton = nextButton;
     }
 
-    private static void ShowBoard(Player player, bool show)
+    public static void ShowBoard(Player player, bool show)
     {
         if (show)
         {
@@ -26,7 +26,7 @@ public class CombatUiManager
         }
     }
 
-    private static void ShowHand(Player player, bool show, bool disabled = false)
+    public static void ShowHand(Player player, bool show, bool disabled = false)
     {
         if (!show)
         {
@@ -45,33 +45,33 @@ public class CombatUiManager
         }
     }
 
-    private void SetNextButtonState(bool enabled)
+    public void SetNextButtonState(bool enabled)
     {
-        _nextButton.Disabled = enabled;
+        _nextButton.Disabled = !enabled;
     }
 
     private void TrackLastPlayer(Player player)
     {
         if (player.IsAlly)
         {
-            _lastAlly = player;
+            LastAlly = player;
         }
         else
         {
-            _lastEnemy = player;
+            LastEnemy = player;
         }
     }
 
     public void HideLastPlayerBoard(bool nextPlayerIsAlly)
     {
-        Player lastPlayer = nextPlayerIsAlly ? _lastAlly : _lastEnemy;
+        Player lastPlayer = nextPlayerIsAlly ? LastAlly : LastEnemy;
         if (lastPlayer != null)
         {
             ShowBoard(lastPlayer, false);
         }
     }
 
-    public void HideLastAllyHand(Player lastAlly)
+    public static void HideLastAllyHand(Player lastAlly)
     {
         if (lastAlly != null)
         {
@@ -99,7 +99,10 @@ public class CombatUiManager
         ShowHand(currentPlayer.IsAlly ? currentPlayer : firstAlly, true, !currentPlayer.IsAlly);
         ShowBoard(firstAlly, true);
         ShowBoard(firstEnemy, true);
-        SetNextButtonState(!currentPlayer.IsAlly);
+        if (currentPlayer.IsAlly)
+        {
+            currentPlayer.AllyHandEnabled += SetNextButtonState;
+        }
     }
 
     public void ShowPlayerUi(Player player)
@@ -110,6 +113,9 @@ public class CombatUiManager
         }
 
         ShowBoard(player, true);
-        SetNextButtonState(!player.IsAlly);
+        if (player.IsAlly)
+        {
+            player.AllyHandEnabled += SetNextButtonState;
+        }
     }
 }

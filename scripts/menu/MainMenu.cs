@@ -7,16 +7,20 @@ namespace NinthLife.scripts.menu;
 
 public partial class MainMenu : Control
 {
-    private readonly Vector2 _goblinPos = new(870, 193);
-    private readonly Vector2 _goblinTwoPos = new(800, 193);
+    private readonly Vector2 _goblinPos = new(890, 193);
+    private readonly Vector2 _goblinThreePos = new(750, 193);
+    private readonly Vector2 _goblinTwoPos = new(820, 193);
     private readonly Vector2 _hopePos = new(60, 145);
+    private readonly Vector2 _hopeTwoPos = new(215, 145);
     private readonly Vector2 _skullPos = new(130, 155);
     private SuitSelection _armorSelection;
     private Button _continueButton;
     private Player _goblin;
+    private Player _goblinThree;
     private Player _goblinTwo;
     private TextureButton _heavyArmorButton;
     private Player _hope;
+    private Player _hopeTwo;
     private TextureButton _lightArmorButton;
     private TextureButton _longbladeButton;
     private TextureButton _maceButton;
@@ -181,6 +185,14 @@ public partial class MainMenu : Control
             1
         );
 
+        _hopeTwo = GameUtils.InstantiateCombatEntity(
+            "Hope 2",
+            ResourceManager.Load<Texture>("res://assets/Character Sprites/Hope/hope_sprite.png"),
+            _hopeTwoPos,
+            true,
+            1
+        );
+
         _goblin = GameUtils.InstantiateCombatEntity(
             "Goblin",
             ResourceManager.Load<Texture>(
@@ -195,6 +207,14 @@ public partial class MainMenu : Control
                 "res://assets/Character Sprites/enemy/goblin/goblin_sprite_rs_2.png"
             ),
             _goblinTwoPos
+        );
+
+        _goblinThree = GameUtils.InstantiateCombatEntity(
+            "Goblin 3",
+            ResourceManager.Load<Texture>(
+                "res://assets/Character Sprites/enemy/goblin/goblin_sprite_rs_3.png"
+            ),
+            _goblinThreePos
         );
 
         object[] suitsList = { "suns", "cures", _weaponSelection.SelectedSuit, _armorSelection.SelectedSuit };
@@ -261,6 +281,14 @@ public partial class MainMenu : Control
         _hope.ShuffleDeck(4);
         _hope.CalculateInitiative();
 
+        AddCardsToPlayerDeck(_hopeTwo, CardLibrary.Suits["wax"].Cards);
+        AddCardsToPlayerDeck(_hopeTwo, CardLibrary.Suits["wicks"].Cards);
+        AddCardsToPlayerDeck(_hopeTwo, CardLibrary.Suits["longblade"].Cards);
+        AddCardsToPlayerDeck(_hopeTwo, CardLibrary.Suits["lightarmor"].Cards);
+
+        _hopeTwo.ShuffleDeck(4);
+        _hopeTwo.CalculateInitiative();
+
         AddCardsToPlayerDeck(_goblin, CardLibrary.Suits["lions"].Cards);
         AddCardsToPlayerDeck(_goblin, CardLibrary.Suits["standards"].Cards);
         AddCardsToPlayerDeck(_goblin, CardLibrary.Suits["mace"].Cards);
@@ -277,10 +305,20 @@ public partial class MainMenu : Control
         _goblinTwo.ShuffleDeck(4);
         _goblinTwo.CalculateInitiative();
 
+        AddCardsToPlayerDeck(_goblinThree, CardLibrary.Suits["lions"].Cards);
+        AddCardsToPlayerDeck(_goblinThree, CardLibrary.Suits["standards"].Cards);
+        AddCardsToPlayerDeck(_goblinThree, CardLibrary.Suits["mace"].Cards);
+        AddCardsToPlayerDeck(_goblinThree, CardLibrary.Suits["heavyarmor"].Cards);
+
+        _goblinThree.ShuffleDeck(4);
+        _goblinThree.CalculateInitiative();
+
         GameUtils.CombatEntities.Add(_skull);
         GameUtils.CombatEntities.Add(_hope);
+        // GameUtils.CombatEntities.Add(_hopeTwo);
         GameUtils.CombatEntities.Add(_goblin);
         GameUtils.CombatEntities.Add(_goblinTwo);
+        GameUtils.CombatEntities.Add(_goblinThree);
 
         GetTree().ChangeSceneToFile("res://scenes/game.tscn");
     }

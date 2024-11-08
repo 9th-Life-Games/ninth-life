@@ -5,9 +5,8 @@ namespace NinthLife.scripts.game;
 
 public partial class Game : Node2D
 {
-    private Button _button;
-
     private CombatManager _combatManager;
+    private Button _endTurnButton;
 
     public override void _Input(InputEvent @event)
     {
@@ -17,15 +16,14 @@ public partial class Game : Node2D
         }
     }
 
-    // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
-        _button = GetNode<Button>("Button");
+        _endTurnButton = GetNode<Button>("EndTurn");
         _combatManager = GetNode<CombatManager>("CombatManager");
-        _button.Pressed += ButtonOnPressed;
+        _endTurnButton.Pressed += EndTurnButtonOnPressed;
     }
 
-    private void ButtonOnPressed()
+    private void EndTurnButtonOnPressed()
     {
         _combatManager.NextTurn();
     }

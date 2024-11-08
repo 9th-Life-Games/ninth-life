@@ -29,7 +29,7 @@ public partial class Card : Sprite2D
 
     public override void _Ready()
     {
-        _button ??= GetNode<Button>("Button");
+        _button ??= GetNode<Button>("EndTurn");
         _button.MouseEntered += OnHoverIn;
         _button.MouseExited += OnHoverOut;
         _button.Pressed += OnExit;

@@ -77,6 +77,7 @@ public partial class CombatManager : Node2D
     private void StartPreview(Player playerToPreview)
     {
         Player currentPlayer = _combatTurnManager.CurrentPlayer;
+        Player firstEnemy = _combatTurnManager.FirstEnemy;
         Player lastEnemy = _combatUiManager.LastEnemy;
         Logger.Debug("Starting Preview", _shouldLog);
         // If previewing current player, end preview instead
@@ -87,10 +88,16 @@ public partial class CombatManager : Node2D
         }
 
         EndPreview(currentPlayer, playerToPreview.IsAlly);
-        Logger.Debug($"Start: Showing player to preview: {playerToPreview.PlayerName}'s board", _shouldLog);
+        Logger.Debug($"Start: [1] Showing player to preview: {playerToPreview.PlayerName}'s board", _shouldLog);
         CombatUiManager.ShowBoard(playerToPreview, true);
+        if (_previouslyShownPlayer == null && lastEnemy == null && !playerToPreview.IsAlly &&
+            playerToPreview != firstEnemy)
+        {
+            CombatUiManager.ShowBoard(firstEnemy, false);
+        }
 
         _isInPreviewMode = true;
+        currentPlayer.TurnIndicatorPreviewColor(true);
         playerToPreview.ShowPreviewIndicator(true);
 
         _previouslyShownPlayer = _previewedPlayer;
@@ -117,7 +124,8 @@ public partial class CombatManager : Node2D
 
                 if (playerToPreview != lastEnemy && lastEnemy != null)
                 {
-                    Logger.Debug($"Start: Showing player to preview: {playerToPreview.PlayerName}'s board", _shouldLog);
+                    Logger.Debug($"Start: [2] Showing player to preview: {playerToPreview.PlayerName}'s board",
+                        _shouldLog);
                     CombatUiManager.ShowBoard(playerToPreview, true);
                     Logger.Debug($"Start: Hiding last enemy: {lastEnemy.PlayerName}'s board", _shouldLog);
                     CombatUiManager.ShowBoard(lastEnemy, false);
@@ -163,6 +171,7 @@ public partial class CombatManager : Node2D
 
         if (_previewedPlayer != null)
         {
+            Logger.Debug("This is the condition that's not handling stuff right", _shouldLog);
             Logger.Debug($"End: Hiding previewed player: {_previewedPlayer.PlayerName}'s board", _shouldLog);
             CombatUiManager.ShowBoard(_previewedPlayer, false);
         }
@@ -181,19 +190,19 @@ public partial class CombatManager : Node2D
         }
         else if (_previewedPlayer.IsAlly && !isAllyNext)
         {
-            Logger.Debug("This is the condition that's not handling stuff right", _shouldLog);
             Logger.Debug($"End: Hiding first enemy: {firstEnemy.PlayerName}'s board", _shouldLog);
             CombatUiManager.ShowBoard(firstEnemy, false);
         }
 
         _isInPreviewMode = false;
+        currentPlayer.TurnIndicatorPreviewColor(false);
         _previewedPlayer = null;
         _previouslyShownPlayer = null;
     }
 
     public override void _Ready()
     {
-        _combatUiManager.SetNextButton(GetNode<Button>("../Button"));
+        _combatUiManager.SetEndTurnButton(GetNode<Button>("../EndTurn"));
         _combatTurnManager.InitializePlayers(this);
         _combatTurnManager.SetInitialAlliesAndEnemies(GetChildren().OfType<Player>());
         _combatUiManager.InitPlayerUi(

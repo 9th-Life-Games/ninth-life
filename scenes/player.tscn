@@ -17,6 +17,3 @@ visible = false
 
 [node name="PreviewIndicator" type="Polygon2D" parent="."]
 visible = false
-
-[node name="Node2D" type="Node2D" parent="."]
-position = Vector2(130, 53)

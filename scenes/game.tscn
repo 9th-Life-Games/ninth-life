@@ -1,10 +1,110 @@
-[gd_scene load_steps=6 format=3 uid="uid://cruxuu5e8mkvj"]
+[gd_scene load_steps=10 format=3 uid="uid://cruxuu5e8mkvj"]
 
 [ext_resource type="Script" path="res://scripts/game/Game.cs" id="1_uqf54"]
 [ext_resource type="Texture2D" uid="uid://ia53v7kydn0a" path="res://assets/Backgrounds/Combat/Background_Dungeon_v2.png" id="2_c8b80"]
 [ext_resource type="Texture2D" uid="uid://jk2iywr57p1j" path="res://assets/Backgrounds/Combat/Brick-Floor-Player.png" id="3_sjmhi"]
 [ext_resource type="Texture2D" uid="uid://lrq3oke7kl1x" path="res://assets/Backgrounds/Combat/brick-floor-enemy.png" id="4_751si"]
 [ext_resource type="Script" path="res://scripts/game/CombatManager.cs" id="5_epdu6"]
+[ext_resource type="FontFile" uid="uid://diqt2vii6tchx" path="res://assets/Fonts/CloisterBlack.ttf" id="6_7xwbe"]
+
+[sub_resource type="Animation" id="Animation_nplvq"]
+resource_name = "show_result"
+length = 2.0
+tracks/0/type = "method"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(2.03333),
+"transitions": PackedFloat32Array(1),
+"values": [{
+"args": [],
+"method": &"queue_free"
+}]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Label:scale")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.3),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(0.5, 0.5), Vector2(1, 1)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Label:modulate")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 2),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 1), Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Label:position")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0.3, 2),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(-119, -259), Vector2(-119, -300)]
+}
+
+[sub_resource type="Animation" id="Animation_3aja4"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Label:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(1, 1)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Label:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 1, 1, 1)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Label:position")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(-119, -259)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_1grhb"]
+_data = {
+"RESET": SubResource("Animation_3aja4"),
+"show_result": SubResource("Animation_nplvq")
+}
 
 [node name="Game" type="Node2D"]
 script = ExtResource("1_uqf54")
@@ -27,10 +127,41 @@ texture = ExtResource("4_751si")
 [node name="CombatManager" type="Node2D" parent="."]
 script = ExtResource("5_epdu6")
 
-[node name="Button" type="Button" parent="."]
-offset_left = 785.0
-offset_top = 331.0
-offset_right = 919.0
-offset_bottom = 376.0
-theme_override_font_sizes/font_size = 23
-text = "Next Turn"
+[node name="EndTurn" type="Button" parent="."]
+offset_left = 764.0
+offset_top = 355.0
+offset_right = 898.0
+offset_bottom = 400.0
+focus_mode = 0
+theme_override_fonts/font = ExtResource("6_7xwbe")
+theme_override_font_sizes/font_size = 24
+text = "End Turn"
+
+[node name="Attack" type="Button" parent="."]
+offset_left = 754.0
+offset_top = 282.0
+offset_right = 908.0
+offset_bottom = 347.0
+focus_mode = 0
+theme_override_fonts/font = ExtResource("6_7xwbe")
+theme_override_font_sizes/font_size = 48
+text = "Attack"
+
+[node name="RollIndicator" type="Node2D" parent="."]
+position = Vector2(834, 281)
+
+[node name="Label" type="Label" parent="RollIndicator"]
+offset_left = -119.0
+offset_top = -259.0
+offset_right = 119.0
+offset_bottom = 3.0
+pivot_offset = Vector2(119, 265)
+theme_override_fonts/font = ExtResource("6_7xwbe")
+theme_override_font_sizes/font_size = 200
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="RollIndicator"]
+libraries = {
+"": SubResource("AnimationLibrary_1grhb")
+}

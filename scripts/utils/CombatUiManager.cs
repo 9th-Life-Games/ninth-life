@@ -5,13 +5,13 @@ namespace NinthLife.scripts.utils;
 
 public class CombatUiManager
 {
-    private Button _nextButton;
+    private Button _endTurnButton;
     public Player LastAlly { get; private set; }
     public Player LastEnemy { get; private set; }
 
-    public void SetNextButton(Button nextButton)
+    public void SetEndTurnButton(Button endTurnButton)
     {
-        _nextButton = nextButton;
+        _endTurnButton = endTurnButton;
     }
 
     public static void ShowBoard(Player player, bool show)
@@ -47,7 +47,8 @@ public class CombatUiManager
 
     public void SetNextButtonState(bool enabled)
     {
-        _nextButton.Disabled = !enabled;
+        Logger.Debug("SetNextButtonState");
+        _endTurnButton.Disabled = !enabled;
     }
 
     private void TrackLastPlayer(Player player)

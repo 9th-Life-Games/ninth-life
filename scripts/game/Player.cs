@@ -19,13 +19,16 @@ public partial class Player : Node2D
 
     private const int HandSize = 9;
     private const float AnimationSpeed = .25f;
+    private Button _attackButton;
     private StringName _combatEntitiesAdded;
     private int _currentCardPlays;
     private int _currentHealth;
     private Hand _hand;
     private int _initiativeBonus;
+    private int _masteryBonus = 3;
 
     private int _maxHealth;
+    private Node2D _rollIndicator;
     private int _totalCardPlays = 2;
     public bool IsHandEnabled { get; private set; }
     public Polygon2D PreviewIndicator { get; private set; }
@@ -45,6 +48,11 @@ public partial class Player : Node2D
     {
         _hand = GetNode<Hand>("Hand");
         _hand.SetPlayerBoard(PlayerBoard);
+        _hand.CardPlayed += OnCardPlayed;
+
+        _rollIndicator = GetNode<Node2D>("../../RollIndicator");
+        _attackButton = GetNode<Button>("../../Attack");
+        _attackButton.Pressed += AttackButtonOnPressed;
 
         SetIndicators();
 
@@ -52,6 +60,23 @@ public partial class Player : Node2D
 
         DrawCards(HandSize, .01);
         PlayerFinishedDrawing += EnablePlayerHand;
+    }
+
+    private void OnCardPlayed(int cardsPlayed)
+    {
+        if (cardsPlayed == _totalCardPlays)
+        {
+            SlideHandDisabled(false);
+        }
+    }
+
+    private void AttackButtonOnPressed()
+    {
+        _attackButton.Disabled = true;
+        Random random = new();
+        int randomNumber = random.Next(1, 11);
+        _rollIndicator.GetNode<Label>("Label").Text = $"{randomNumber + _masteryBonus}";
+        _rollIndicator.GetNode<AnimationPlayer>("AnimationPlayer").Play("show_result");
     }
 
     public void StartTurn()
@@ -69,6 +94,8 @@ public partial class Player : Node2D
             }
             else
             {
+                _attackButton.Disabled = false;
+                _hand.ResetPlays();
                 EnablePlayerHand();
             }
         };
@@ -94,6 +121,11 @@ public partial class Player : Node2D
     public void ShowPreviewIndicator(bool show)
     {
         PreviewIndicator.Visible = show;
+    }
+
+    public void TurnIndicatorPreviewColor(bool inPreviewMode)
+    {
+        TurnIndicator.Color = !inPreviewMode ? new Color("00ff00") : new Color("006400");
     }
 
     public void EnemyPlayHand()
@@ -227,7 +259,7 @@ public partial class Player : Node2D
         );
     }
 
-    public void SlideHandDisabled()
+    public void SlideHandDisabled(bool emitSignal = true)
     {
         Tween handTween = GetTree().CreateTween();
         handTween.TweenProperty(
@@ -238,7 +270,7 @@ public partial class Player : Node2D
         );
         handTween.Finished += delegate
         {
-            DisablePlayerHand();
+            DisablePlayerHand(emitSignal);
             _hand.PositionCards();
         };
     }
@@ -261,11 +293,18 @@ public partial class Player : Node2D
         EmitSignal(SignalName.AllyHandEnabled, true);
     }
 
-    private void DisablePlayerHand()
+    private void DisablePlayerHand(bool emitSignal = true)
     {
         IsHandEnabled = false;
         _hand.DisableCards();
-        EmitSignal(SignalName.AllyHandEnabled, false);
+        if (emitSignal)
+        {
+            EmitSignal(SignalName.AllyHandEnabled, false);
+        }
+        else
+        {
+            Logger.Debug("Not emitting signal");
+        }
     }
 
     private async void DrawCards(int x, double delay = AnimationSpeed)

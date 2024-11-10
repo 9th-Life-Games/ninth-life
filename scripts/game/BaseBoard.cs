@@ -51,8 +51,16 @@ public partial class BaseBoard : Node2D
         GetTree().GetRoot().GetNode<Node2D>("Game").AddChild(displayCards);
     }
 
-    public void AddCard(Card card)
+    public void AddCard(Card card, bool discard = false)
     {
+        if (discard)
+        {
+            Logger.Debug("AddCard to discard");
+            _discardBox.AddChild(card);
+            return;
+        }
+
+        Logger.Debug("AddCard");
         if (card.NumericValue < 19)
         {
             _cardPiles[card.SuitType].Add(card);

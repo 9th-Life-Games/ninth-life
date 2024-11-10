@@ -134,6 +134,11 @@ public partial class Card : Sprite2D
         }
     }
 
+    public void ExitCard()
+    {
+        _currentState = CardState.Exit;
+    }
+
     private void OnAnimationFinished(StringName animationName)
     {
         if (animationName == "exit")

@@ -7,20 +7,20 @@ namespace NinthLife.scripts.menu;
 
 public partial class MainMenu : Control
 {
+    private readonly Vector2 _drinkerPos = new(210, 193);
     private readonly Vector2 _goblinPos = new(890, 193);
     private readonly Vector2 _goblinThreePos = new(750, 193);
     private readonly Vector2 _goblinTwoPos = new(820, 193);
     private readonly Vector2 _hopePos = new(60, 145);
-    private readonly Vector2 _hopeTwoPos = new(215, 145);
     private readonly Vector2 _skullPos = new(130, 155);
     private SuitSelection _armorSelection;
     private Button _continueButton;
+    private Player _drinker;
     private Player _goblin;
     private Player _goblinThree;
     private Player _goblinTwo;
     private TextureButton _heavyArmorButton;
     private Player _hope;
-    private Player _hopeTwo;
     private TextureButton _lightArmorButton;
     private TextureButton _longbladeButton;
     private TextureButton _maceButton;
@@ -185,12 +185,11 @@ public partial class MainMenu : Control
             1
         );
 
-        _hopeTwo = GameUtils.InstantiateCombatEntity(
-            "Hope 2",
-            ResourceManager.Load<Texture>("res://assets/Character Sprites/Hope/hope_sprite.png"),
-            _hopeTwoPos,
-            true,
-            1
+        _drinker = GameUtils.InstantiateCombatEntity(
+            "Drinker",
+            ResourceManager.Load<Texture>("res://assets/Character Sprites/Drinker/drinker_sprite.png"),
+            _drinkerPos,
+            true
         );
 
         _goblin = GameUtils.InstantiateCombatEntity(
@@ -281,32 +280,32 @@ public partial class MainMenu : Control
         _hope.ShuffleDeck(4);
         _hope.CalculateInitiative();
 
-        AddCardsToPlayerDeck(_hopeTwo, CardLibrary.Suits["wax"].Cards);
-        AddCardsToPlayerDeck(_hopeTwo, CardLibrary.Suits["wicks"].Cards);
-        AddCardsToPlayerDeck(_hopeTwo, CardLibrary.Suits["longblade"].Cards);
-        AddCardsToPlayerDeck(_hopeTwo, CardLibrary.Suits["lightarmor"].Cards);
+        AddCardsToPlayerDeck(_drinker, CardLibrary.Suits["oracles"].Cards);
+        AddCardsToPlayerDeck(_drinker, CardLibrary.Suits["paths"].Cards);
+        AddCardsToPlayerDeck(_drinker, CardLibrary.Suits["shortblade"].Cards);
+        AddCardsToPlayerDeck(_drinker, CardLibrary.Suits["lightarmor"].Cards);
 
-        _hopeTwo.ShuffleDeck(4);
-        _hopeTwo.CalculateInitiative();
+        _drinker.ShuffleDeck(4);
+        _drinker.CalculateInitiative();
 
         AddCardsToPlayerDeck(_goblin, CardLibrary.Suits["lions"].Cards);
         AddCardsToPlayerDeck(_goblin, CardLibrary.Suits["standards"].Cards);
-        AddCardsToPlayerDeck(_goblin, CardLibrary.Suits["mace"].Cards);
-        AddCardsToPlayerDeck(_goblin, CardLibrary.Suits["heavyarmor"].Cards);
+        AddCardsToPlayerDeck(_goblin, CardLibrary.Suits["longblade"].Cards);
+        AddCardsToPlayerDeck(_goblin, CardLibrary.Suits["lightarmor"].Cards);
 
         _goblin.ShuffleDeck(4);
         _goblin.CalculateInitiative();
 
-        AddCardsToPlayerDeck(_goblinTwo, CardLibrary.Suits["lions"].Cards);
-        AddCardsToPlayerDeck(_goblinTwo, CardLibrary.Suits["standards"].Cards);
-        AddCardsToPlayerDeck(_goblinTwo, CardLibrary.Suits["mace"].Cards);
-        AddCardsToPlayerDeck(_goblinTwo, CardLibrary.Suits["heavyarmor"].Cards);
+        AddCardsToPlayerDeck(_goblinTwo, CardLibrary.Suits["shadows"].Cards);
+        AddCardsToPlayerDeck(_goblinTwo, CardLibrary.Suits["venom"].Cards);
+        AddCardsToPlayerDeck(_goblinTwo, CardLibrary.Suits["shortblade"].Cards);
+        AddCardsToPlayerDeck(_goblinTwo, CardLibrary.Suits["lightarmor"].Cards);
 
         _goblinTwo.ShuffleDeck(4);
         _goblinTwo.CalculateInitiative();
 
-        AddCardsToPlayerDeck(_goblinThree, CardLibrary.Suits["lions"].Cards);
-        AddCardsToPlayerDeck(_goblinThree, CardLibrary.Suits["standards"].Cards);
+        AddCardsToPlayerDeck(_goblinThree, CardLibrary.Suits["suns"].Cards);
+        AddCardsToPlayerDeck(_goblinThree, CardLibrary.Suits["cures"].Cards);
         AddCardsToPlayerDeck(_goblinThree, CardLibrary.Suits["mace"].Cards);
         AddCardsToPlayerDeck(_goblinThree, CardLibrary.Suits["heavyarmor"].Cards);
 
@@ -315,7 +314,7 @@ public partial class MainMenu : Control
 
         GameUtils.CombatEntities.Add(_skull);
         GameUtils.CombatEntities.Add(_hope);
-        // GameUtils.CombatEntities.Add(_hopeTwo);
+        GameUtils.CombatEntities.Add(_drinker);
         GameUtils.CombatEntities.Add(_goblin);
         GameUtils.CombatEntities.Add(_goblinTwo);
         GameUtils.CombatEntities.Add(_goblinThree);

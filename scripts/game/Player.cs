@@ -17,21 +17,22 @@ public partial class Player : Node2D
     [Signal]
     public delegate void PlayerFinishedDrawingEventHandler();
 
-    private const int HandSize = 9;
+    private const int HandSize = 4;
     private const float AnimationSpeed = .25f;
     private Button _attackButton;
     private StringName _combatEntitiesAdded;
-    private int _currentCardPlays;
     private int _currentHealth;
+    private Node2D _defenseDraw;
     private Hand _hand;
     private int _initiativeBonus;
-    private int _masteryBonus = 3;
 
     private int _maxHealth;
-    private Node2D _rollIndicator;
-    private int _totalCardPlays = 2;
+    public int CurrentCardPlays { get; private set; }
+    public int TotalCardPlays { get; private set; } = 2;
+    public int MasteryBonus { get; private set; } = 3;
     public bool IsHandEnabled { get; private set; }
     public Polygon2D PreviewIndicator { get; private set; }
+    public Polygon2D AttackModeIndicator { get; private set; }
 
     public List<Card> Deck { get; } = new();
 
@@ -49,10 +50,8 @@ public partial class Player : Node2D
         _hand = GetNode<Hand>("Hand");
         _hand.SetPlayerBoard(PlayerBoard);
         _hand.CardPlayed += OnCardPlayed;
-
-        _rollIndicator = GetNode<Node2D>("../../RollIndicator");
+        _defenseDraw = GetNode<Node2D>("../../DefenseDraw");
         _attackButton = GetNode<Button>("../../Attack");
-        _attackButton.Pressed += AttackButtonOnPressed;
 
         SetIndicators();
 
@@ -62,22 +61,28 @@ public partial class Player : Node2D
         PlayerFinishedDrawing += EnablePlayerHand;
     }
 
+    public void DrawCardForDefense(Action callback)
+    {
+        Card drawnCard = Deck[0];
+        Deck.RemoveAt(0);
+        _defenseDraw.AddChild(drawnCard);
+        drawnCard.SetMode(Card.CardMode.Disabled, true);
+        GetTree().CreateTimer(1.75).Timeout += () =>
+        {
+            drawnCard.ExitCard();
+            callback.Invoke();
+        };
+    }
+
     private void OnCardPlayed(int cardsPlayed)
     {
-        if (cardsPlayed == _totalCardPlays)
+        CurrentCardPlays = cardsPlayed;
+        if (cardsPlayed == TotalCardPlays)
         {
             SlideHandDisabled(false);
         }
     }
 
-    private void AttackButtonOnPressed()
-    {
-        _attackButton.Disabled = true;
-        Random random = new();
-        int randomNumber = random.Next(1, 11);
-        _rollIndicator.GetNode<Label>("Label").Text = $"{randomNumber + _masteryBonus}";
-        _rollIndicator.GetNode<AnimationPlayer>("AnimationPlayer").Play("show_result");
-    }
 
     public void StartTurn()
     {
@@ -95,6 +100,7 @@ public partial class Player : Node2D
             else
             {
                 _attackButton.Disabled = false;
+                _attackButton.ButtonPressed = false;
                 _hand.ResetPlays();
                 EnablePlayerHand();
             }
@@ -115,6 +121,10 @@ public partial class Player : Node2D
         PreviewIndicator = GetNode<Polygon2D>("PreviewIndicator");
         PreviewIndicator.Polygon = new Vector2[] { new(-10, 0), new(10, 0), new(0, -20) };
         PreviewIndicator.Rotate(Mathf.DegToRad(180));
+
+        AttackModeIndicator = GetNode<Polygon2D>("AttackModeIndicator");
+        AttackModeIndicator.Polygon = new Vector2[] { new(-10, 0), new(10, 0), new(0, -20) };
+        AttackModeIndicator.Rotate(Mathf.DegToRad(180));
     }
 
 
@@ -126,6 +136,16 @@ public partial class Player : Node2D
     public void TurnIndicatorPreviewColor(bool inPreviewMode)
     {
         TurnIndicator.Color = !inPreviewMode ? new Color("00ff00") : new Color("006400");
+    }
+
+    public void SetAttackModeIndicator(bool inAttackMode)
+    {
+        AttackModeIndicator.Visible = inAttackMode;
+    }
+
+    public void SetSelectedEnemy(bool selected)
+    {
+        AttackModeIndicator.Color = selected ? Colors.Orange : Colors.Yellow;
     }
 
     public void EnemyPlayHand()
@@ -265,7 +285,7 @@ public partial class Player : Node2D
         handTween.TweenProperty(
             _hand,
             "global_position:y",
-            GlobalPosition.Y + 575,
+            GlobalPosition.Y + 555,
             AnimationSpeed
         );
         handTween.Finished += delegate
@@ -290,6 +310,7 @@ public partial class Player : Node2D
     {
         IsHandEnabled = true;
         _hand.EnableCards();
+        Logger.Debug($"Enabling {PlayerName}'s hand");
         EmitSignal(SignalName.AllyHandEnabled, true);
     }
 

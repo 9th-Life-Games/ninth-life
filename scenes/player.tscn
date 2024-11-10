@@ -17,3 +17,6 @@ visible = false
 
 [node name="PreviewIndicator" type="Polygon2D" parent="."]
 visible = false
+
+[node name="AttackModeIndicator" type="Polygon2D" parent="."]
+visible = false

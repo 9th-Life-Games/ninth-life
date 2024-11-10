@@ -1,11 +1,51 @@
-[gd_scene load_steps=10 format=3 uid="uid://cruxuu5e8mkvj"]
+[gd_scene load_steps=11 format=3 uid="uid://cruxuu5e8mkvj"]
 
 [ext_resource type="Script" path="res://scripts/game/Game.cs" id="1_uqf54"]
 [ext_resource type="Texture2D" uid="uid://ia53v7kydn0a" path="res://assets/Backgrounds/Combat/Background_Dungeon_v2.png" id="2_c8b80"]
 [ext_resource type="Texture2D" uid="uid://jk2iywr57p1j" path="res://assets/Backgrounds/Combat/Brick-Floor-Player.png" id="3_sjmhi"]
 [ext_resource type="Texture2D" uid="uid://lrq3oke7kl1x" path="res://assets/Backgrounds/Combat/brick-floor-enemy.png" id="4_751si"]
 [ext_resource type="Script" path="res://scripts/game/CombatManager.cs" id="5_epdu6"]
+[ext_resource type="Script" path="res://scripts/game/TurnOrderDisplay.cs" id="5_ymtxk"]
 [ext_resource type="FontFile" uid="uid://diqt2vii6tchx" path="res://assets/Fonts/CloisterBlack.ttf" id="6_7xwbe"]
+
+[sub_resource type="Animation" id="Animation_3aja4"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Label:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(1, 1)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Label:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 1, 1, 1)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Label:position")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(-119, -259)]
+}
 
 [sub_resource type="Animation" id="Animation_nplvq"]
 resource_name = "show_result"
@@ -61,45 +101,6 @@ tracks/3/keys = {
 "values": [Vector2(-119, -259), Vector2(-119, -300)]
 }
 
-[sub_resource type="Animation" id="Animation_3aja4"]
-length = 0.001
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("Label:scale")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 0,
-"values": [Vector2(1, 1)]
-}
-tracks/1/type = "value"
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/path = NodePath("Label:modulate")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 0,
-"values": [Color(1, 1, 1, 1)]
-}
-tracks/2/type = "value"
-tracks/2/imported = false
-tracks/2/enabled = true
-tracks/2/path = NodePath("Label:position")
-tracks/2/interp = 1
-tracks/2/loop_wrap = true
-tracks/2/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 0,
-"values": [Vector2(-119, -259)]
-}
-
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_1grhb"]
 _data = {
 "RESET": SubResource("Animation_3aja4"),
@@ -124,6 +125,30 @@ texture = ExtResource("3_sjmhi")
 position = Vector2(359, -4.5)
 texture = ExtResource("4_751si")
 
+[node name="TurnOrderDisplay" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("5_ymtxk")
+
+[node name="ColorRect" type="ColorRect" parent="TurnOrderDisplay"]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 31.0
+offset_bottom = 31.0
+color = Color(0.701961, 0.517647, 0.772549, 0.32549)
+
+[node name="HBoxContainer" type="HBoxContainer" parent="TurnOrderDisplay"]
+layout_mode = 0
+offset_left = 5.0
+offset_top = 5.0
+offset_right = 163.0
+offset_bottom = 55.0
+scale = Vector2(0.5, 0.5)
+theme_override_constants/separation = 2
+
 [node name="CombatManager" type="Node2D" parent="."]
 script = ExtResource("5_epdu6")
 
@@ -145,6 +170,7 @@ offset_bottom = 347.0
 focus_mode = 0
 theme_override_fonts/font = ExtResource("6_7xwbe")
 theme_override_font_sizes/font_size = 48
+toggle_mode = true
 text = "Attack"
 
 [node name="RollIndicator" type="Node2D" parent="."]
@@ -165,3 +191,6 @@ vertical_alignment = 1
 libraries = {
 "": SubResource("AnimationLibrary_1grhb")
 }
+
+[node name="DefenseDraw" type="Node2D" parent="."]
+position = Vector2(643, 248)

@@ -7,14 +7,17 @@ namespace NinthLife.scripts.utils;
 public class CombatTurnManager
 {
     private readonly List<Player> _allyTurnOrder = new();
-    private readonly List<Player> _enemyTurnOrder = new();
     private readonly List<Player> _turnOrder = new();
+    public readonly List<Player> EnemyTurnOrder = new();
+
+    private TurnOrderDisplay _turnOrderDisplay;
     public Player CurrentPlayer { get; private set; }
     public Player FirstAlly { get; private set; }
     public Player FirstEnemy { get; private set; }
 
-    public void InitializePlayers(CombatManager combatManager)
+    public void InitializePlayers(CombatManager combatManager, TurnOrderDisplay turnOrderDisplay)
     {
+        _turnOrderDisplay = turnOrderDisplay;
         foreach (
             Player player in GameUtils.CombatEntities.OrderByDescending(static player =>
                 player.Initiative
@@ -23,13 +26,14 @@ public class CombatTurnManager
         {
             CurrentPlayer ??= player;
             _turnOrder.Add(player);
+            _turnOrderDisplay.AddAvatar(player);
             if (player.IsAlly)
             {
                 _allyTurnOrder.Add(player);
             }
             else
             {
-                _enemyTurnOrder.Add(player);
+                EnemyTurnOrder.Add(player);
             }
 
             combatManager.AddChild(player);
@@ -81,6 +85,7 @@ public class CombatTurnManager
     public Player SwapTurnToNextPlayer(Player nextPlayer)
     {
         CurrentPlayer.EndTurn();
+        _turnOrderDisplay.CycleAvatars(CurrentPlayer);
         _turnOrder.Remove(CurrentPlayer);
         _turnOrder.Add(CurrentPlayer);
         CurrentPlayer = nextPlayer;
@@ -89,12 +94,12 @@ public class CombatTurnManager
 
     public Player GetFirstEnemyInTurnOrder()
     {
-        return _enemyTurnOrder[0];
+        return EnemyTurnOrder[0];
     }
 
     public Player GetLastEnemyInTurnOrder()
     {
-        return _enemyTurnOrder[^1];
+        return EnemyTurnOrder[^1];
     }
 
     public Player GetFirstAllyInTurnOrder()

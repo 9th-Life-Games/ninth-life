@@ -1,5 +1,6 @@
 using Godot;
 using NinthLife.scripts.game;
+using NinthLife.scripts.game.combat;
 
 namespace NinthLife.scripts.utils;
 
@@ -7,14 +8,36 @@ public class CombatUiManager
 {
     private Button _attackButton;
     private Button _endTurnButton;
+    private bool _isInPreviewMode;
+    private Player _previewedPlayer;
+    private Player _previouslyShownPlayer;
+    private TurnManager _turnManager;
+
     public Player LastAlly { get; private set; }
     public Player LastEnemy { get; private set; }
 
-    public void SetButtons(Button endTurnButton, Button attackButton)
+    #region Button Management
+
+    public void InitUiManager(Button endTurnButton, Button attackButton, TurnManager turnManager)
     {
         _endTurnButton = endTurnButton;
         _attackButton = attackButton;
+        _turnManager = turnManager;
     }
+
+    public void SetEndTurnButtonState(bool enabled)
+    {
+        _endTurnButton.Disabled = !enabled;
+    }
+
+    public void SetAttackButtonState(bool enabled)
+    {
+        _attackButton.Disabled = !enabled;
+    }
+
+    #endregion
+
+    #region Board and Hand Management
 
     public static void ShowBoard(Player player, bool show)
     {
@@ -47,20 +70,17 @@ public class CombatUiManager
         }
     }
 
-    public void SetNextButtonState(bool enabled)
-    {
-        Logger.Debug($"SetNextButtonState: {enabled}");
-        _endTurnButton.Disabled = !enabled;
-    }
+    #endregion
 
-    public void SetAttackButtonState(bool enabled)
-    {
-        Logger.Debug($"SetAttackButtonState: {enabled}");
-        _attackButton.Disabled = !enabled;
-    }
+    #region Player Tracking
 
     private void TrackLastPlayer(Player player)
     {
+        if (player == null)
+        {
+            return;
+        }
+
         if (player.IsAlly)
         {
             LastAlly = player;
@@ -88,6 +108,140 @@ public class CombatUiManager
         }
     }
 
+    #endregion
+
+    #region Preview Management
+
+    public void StartPreview(Player playerToPreview, Player currentPlayer)
+    {
+        // If previewing current player, end preview instead
+        if (playerToPreview == currentPlayer)
+        {
+            EndPreview(currentPlayer, true);
+            return;
+        }
+
+        EndPreview(currentPlayer, playerToPreview.IsAlly);
+        ShowBoard(playerToPreview, true);
+
+        if (_previouslyShownPlayer == null && LastEnemy == null &&
+            !playerToPreview.IsAlly && playerToPreview != _turnManager.FirstEnemy)
+        {
+            ShowBoard(_turnManager.FirstEnemy, false);
+        }
+
+        _isInPreviewMode = true;
+        currentPlayer.TurnIndicatorPreviewColor(true);
+        playerToPreview.ShowPreviewIndicator(true);
+
+        _previouslyShownPlayer = _previewedPlayer;
+        _previewedPlayer = playerToPreview;
+
+        // Disable UI elements during preview
+        SetEndTurnButtonState(false);
+        SetAttackButtonState(false);
+
+        if (_previewedPlayer.IsAlly)
+        {
+            HandleAllyPreview(currentPlayer, playerToPreview);
+        }
+        else
+        {
+            HandleEnemyPreview(currentPlayer, playerToPreview);
+        }
+    }
+
+    private void HandleAllyPreview(Player currentPlayer, Player playerToPreview)
+    {
+        ShowBoard(currentPlayer, false);
+        ShowHand(currentPlayer, false);
+        ShowHand(playerToPreview, true, true);
+    }
+
+    private void HandleEnemyPreview(Player currentPlayer, Player playerToPreview)
+    {
+        ShowHand(currentPlayer, true, true);
+
+        if (_previouslyShownPlayer?.IsAlly == true)
+        {
+            ShowHand(_previouslyShownPlayer, false);
+        }
+
+        if (playerToPreview != LastEnemy && LastEnemy != null)
+        {
+            ShowBoard(playerToPreview, true);
+            ShowBoard(LastEnemy, false);
+        }
+    }
+
+    public void EndPreview(Player currentPlayer, bool isAllyNext = false)
+    {
+        if (!_isInPreviewMode)
+        {
+            return;
+        }
+
+        Player firstEnemy = _turnManager.FirstEnemy;
+
+        _previewedPlayer.ShowPreviewIndicator(false);
+        ShowBoard(currentPlayer, true);
+
+        if (LastEnemy != null)
+        {
+            ShowBoard(LastEnemy, true);
+        }
+
+        if (_previewedPlayer.IsAlly && _previewedPlayer != currentPlayer)
+        {
+            ShowHand(_previewedPlayer, false);
+        }
+
+        // Re-enable UI elements
+        SetEndTurnButtonState(true);
+        if (currentPlayer.HasAttacked)
+        {
+            SetAttackButtonState(true);
+        }
+
+        HandleCurrentPlayerHand(currentPlayer);
+        HandleBoardTransitions(currentPlayer, isAllyNext);
+
+        _isInPreviewMode = false;
+        currentPlayer.TurnIndicatorPreviewColor(false);
+        _previewedPlayer = null;
+        _previouslyShownPlayer = null;
+    }
+
+    private void HandleCurrentPlayerHand(Player currentPlayer)
+    {
+        if (currentPlayer.IsAlly)
+        {
+            ShowHand(currentPlayer, true, currentPlayer.CurrentCardPlays >= currentPlayer.TotalCardPlays);
+        }
+    }
+
+    private void HandleBoardTransitions(Player currentPlayer, bool isAllyNext)
+    {
+        Player firstEnemy = _turnManager.FirstEnemy;
+        if (_previewedPlayer != null)
+        {
+            ShowBoard(_previewedPlayer, false);
+        }
+
+        if (!_previewedPlayer.IsAlly && isAllyNext)
+        {
+            ShowBoard(LastEnemy ?? firstEnemy, true);
+        }
+        else if (_previewedPlayer.IsAlly && !isAllyNext)
+        {
+            ShowBoard(firstEnemy, false);
+        }
+    }
+
+    #endregion
+
+    #region Turn Management
+
     public void HandleCurrentAllyHandExit(Player currentPlayer, Player nextPlayer)
     {
         TrackLastPlayer(currentPlayer);
@@ -110,7 +264,7 @@ public class CombatUiManager
         ShowBoard(firstEnemy, true);
         if (currentPlayer.IsAlly)
         {
-            currentPlayer.AllyHandEnabled += SetNextButtonState;
+            currentPlayer.AllyHandEnabled += SetEndTurnButtonState;
         }
     }
 
@@ -124,7 +278,9 @@ public class CombatUiManager
         ShowBoard(player, true);
         if (player.IsAlly)
         {
-            player.AllyHandEnabled += SetNextButtonState;
+            player.AllyHandEnabled += SetEndTurnButtonState;
         }
     }
+
+    #endregion
 }

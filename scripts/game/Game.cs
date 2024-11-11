@@ -1,4 +1,5 @@
 using Godot;
+using NinthLife.scripts.game.combat;
 using NinthLife.scripts.utils;
 
 namespace NinthLife.scripts.game;
@@ -25,7 +26,14 @@ public partial class Game : Node2D
 
     private void EndTurnButtonOnPressed()
     {
-        _combatManager.NextTurn();
+        // Only allow ending turn if it's an ally's turn and their hand is enabled
+        TurnManager turnManager = _combatManager.TurnManager;
+        Player currentPlayer = turnManager.CurrentPlayer;
+
+        if (currentPlayer.IsAlly && currentPlayer.IsHandEnabled && !turnManager.IsInAttackMode)
+        {
+            turnManager.TransitionTo<EndTurnState>();
+        }
     }
 
     private void CleanupAndQuit()

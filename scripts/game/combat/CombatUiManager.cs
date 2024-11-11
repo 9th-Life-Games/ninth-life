@@ -1,7 +1,7 @@
 using Godot;
-using NinthLife.scripts.game;
+using NinthLife.scripts.utils;
 
-namespace NinthLife.scripts.utils;
+namespace NinthLife.scripts.game.combat;
 
 public class CombatUiManager
 {
@@ -38,6 +38,11 @@ public class CombatUiManager
 
         if (disabled)
         {
+            if (!player.IsAlly)
+            {
+                Logger.Debug("****Ooooops****");
+            }
+
             player.SlideHandDisabled();
         }
         else
@@ -108,23 +113,20 @@ public class CombatUiManager
         ShowHand(currentPlayer.IsAlly ? currentPlayer : firstAlly, true, !currentPlayer.IsAlly);
         ShowBoard(firstAlly, true);
         ShowBoard(firstEnemy, true);
-        if (currentPlayer.IsAlly)
-        {
-            currentPlayer.AllyHandEnabled += SetNextButtonState;
-        }
     }
 
     public void ShowPlayerUi(Player player)
     {
         if (player.IsAlly)
         {
+            if (LastAlly != null)
+            {
+                ShowHand(LastAlly, false);
+            }
+
             ShowHand(player, true);
         }
 
         ShowBoard(player, true);
-        if (player.IsAlly)
-        {
-            player.AllyHandEnabled += SetNextButtonState;
-        }
     }
 }

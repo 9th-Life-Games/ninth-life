@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
-using NinthLife.scripts.game;
+using NinthLife.scripts.utils;
 
-namespace NinthLife.scripts.utils;
+namespace NinthLife.scripts.game.combat;
 
 public class CombatTurnManager
 {
@@ -12,8 +12,6 @@ public class CombatTurnManager
 
     private TurnOrderDisplay _turnOrderDisplay;
     public Player CurrentPlayer { get; private set; }
-    public Player FirstAlly { get; private set; }
-    public Player FirstEnemy { get; private set; }
 
     public void InitializePlayers(CombatManager combatManager, TurnOrderDisplay turnOrderDisplay)
     {
@@ -42,21 +40,6 @@ public class CombatTurnManager
         CurrentPlayer.TurnIndicator.Visible = true;
     }
 
-    public void SetInitialAlliesAndEnemies(IEnumerable<Player> players)
-    {
-        foreach (Player player in players)
-        {
-            if (player.IsAlly)
-            {
-                FirstAlly ??= player;
-            }
-            else
-            {
-                FirstEnemy ??= player;
-            }
-        }
-    }
-
     public Player GetNextPlayer()
     {
         return _turnOrder[1];
@@ -79,7 +62,7 @@ public class CombatTurnManager
 
     public Player GetLastAlly()
     {
-        return _turnOrder.FindLast(player => player.IsAlly);
+        return _allyTurnOrder[^1];
     }
 
     public Player SwapTurnToNextPlayer(Player nextPlayer)
@@ -90,25 +73,5 @@ public class CombatTurnManager
         _turnOrder.Add(CurrentPlayer);
         CurrentPlayer = nextPlayer;
         return CurrentPlayer;
-    }
-
-    public Player GetFirstEnemyInTurnOrder()
-    {
-        return EnemyTurnOrder[0];
-    }
-
-    public Player GetLastEnemyInTurnOrder()
-    {
-        return EnemyTurnOrder[^1];
-    }
-
-    public Player GetFirstAllyInTurnOrder()
-    {
-        return _allyTurnOrder[0];
-    }
-
-    public Player GetLastAllyInTurnOrder()
-    {
-        return _allyTurnOrder[^1];
     }
 }

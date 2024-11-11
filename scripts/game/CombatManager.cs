@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using NinthLife.scripts.game.combat;
 using NinthLife.scripts.utils;
 
 namespace NinthLife.scripts.game;
@@ -24,6 +26,8 @@ public partial class CombatManager : Node2D
     private int _rollValue;
     private bool _shouldLog;
     private TurnOrderDisplay _turnOrderDisplay;
+    public Player FirstAlly { get; private set; }
+    public Player FirstEnemy { get; private set; }
 
     public override void _Input(InputEvent @event)
     {
@@ -91,15 +95,30 @@ public partial class CombatManager : Node2D
         _attackButton.Toggled += AttackButtonOnPressed;
         _combatUiManager.SetButtons(_endTurnButton, _attackButton);
         _combatTurnManager.InitializePlayers(this, _turnOrderDisplay);
-        _combatTurnManager.SetInitialAlliesAndEnemies(GetChildren().OfType<Player>());
+        SetInitialAlliesAndEnemies(GetChildren().OfType<Player>());
         _combatUiManager.InitPlayerUi(
             _combatTurnManager.CurrentPlayer,
-            _combatTurnManager.FirstAlly,
-            _combatTurnManager.FirstEnemy
+            FirstAlly,
+            FirstEnemy
         );
         if (!_combatTurnManager.CurrentPlayer.IsAlly)
         {
             InitEnemyAi();
+        }
+    }
+
+    private void SetInitialAlliesAndEnemies(IEnumerable<Player> players)
+    {
+        foreach (Player player in players)
+        {
+            if (player.IsAlly)
+            {
+                FirstAlly ??= player;
+            }
+            else
+            {
+                FirstEnemy ??= player;
+            }
         }
     }
 
@@ -130,8 +149,8 @@ public partial class CombatManager : Node2D
         else
         {
             Logger.Debug("Toggled false");
-            _combatTurnManager.FirstEnemy.SetSelectedEnemy(true);
-            _playerToAttack = _combatTurnManager.FirstEnemy;
+            FirstEnemy.SetSelectedEnemy(true);
+            _playerToAttack = FirstEnemy;
             _playerToAttackIndex = 0;
             _combatTurnManager.CurrentPlayer.SlideHandDisabled();
         }
@@ -226,7 +245,7 @@ public partial class CombatManager : Node2D
     private void StartPreview(Player playerToPreview)
     {
         Player currentPlayer = _combatTurnManager.CurrentPlayer;
-        Player firstEnemy = _combatTurnManager.FirstEnemy;
+        Player firstEnemy = FirstEnemy;
         Player lastEnemy = _combatUiManager.LastEnemy;
         Logger.Debug("Starting Preview", _shouldLog);
         // If previewing current player, end preview instead
@@ -255,6 +274,7 @@ public partial class CombatManager : Node2D
 
         // Disable UI elements during preview
         _combatUiManager.SetNextButtonState(false);
+        Logger.Debug("****Disabling");
         _combatUiManager.SetAttackButtonState(false);
 
         switch (_previewedPlayer.IsAlly)
@@ -295,7 +315,6 @@ public partial class CombatManager : Node2D
         Logger.Debug("Ending Preview", _shouldLog);
 
         Player lastEnemy = _combatUiManager.LastEnemy;
-        Player firstEnemy = _combatTurnManager.FirstEnemy;
 
         _previewedPlayer.ShowPreviewIndicator(false);
 
@@ -313,6 +332,7 @@ public partial class CombatManager : Node2D
         }
 
         // Re-enable UI elements
+        Logger.Debug("****Enabling");
         _combatUiManager.SetNextButtonState(true);
         if (!_hasAttacked)
         {
@@ -341,15 +361,15 @@ public partial class CombatManager : Node2D
         if (!_previewedPlayer.IsAlly && isAllyNext)
         {
             Logger.Debug(
-                $"End: [2] Showing {(lastEnemy != null ? "last enemy" : "first enemy")}: {(lastEnemy != null ? lastEnemy.PlayerName : firstEnemy.PlayerName)}'s board",
+                $"End: [2] Showing {(lastEnemy != null ? "last enemy" : "first enemy")}: {(lastEnemy != null ? lastEnemy.PlayerName : FirstEnemy.PlayerName)}'s board",
                 _shouldLog
             );
-            CombatUiManager.ShowBoard(lastEnemy ?? firstEnemy, true);
+            CombatUiManager.ShowBoard(lastEnemy ?? FirstEnemy, true);
         }
         else if (_previewedPlayer.IsAlly && !isAllyNext)
         {
-            Logger.Debug($"End: Hiding first enemy: {firstEnemy.PlayerName}'s board", _shouldLog);
-            CombatUiManager.ShowBoard(firstEnemy, false);
+            Logger.Debug($"End: Hiding first enemy: {FirstEnemy.PlayerName}'s board", _shouldLog);
+            CombatUiManager.ShowBoard(FirstEnemy, false);
         }
 
         _isInPreviewMode = false;

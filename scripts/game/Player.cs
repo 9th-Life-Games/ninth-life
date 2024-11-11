@@ -77,7 +77,7 @@ public partial class Player : Node2D
     private void OnCardPlayed(int cardsPlayed)
     {
         CurrentCardPlays = cardsPlayed;
-        if (cardsPlayed == TotalCardPlays)
+        if (cardsPlayed == TotalCardPlays && IsAlly)
         {
             SlideHandDisabled(false);
         }

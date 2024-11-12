@@ -7,6 +7,7 @@ public partial class Game : Node2D
 {
     private CombatManager _combatManager;
     private Button _endTurnButton;
+    private AudioStreamPlayer2D _musicPlayer;
 
     public override void _Input(InputEvent @event)
     {
@@ -21,6 +22,8 @@ public partial class Game : Node2D
         _endTurnButton = GetNode<Button>("EndTurn");
         _combatManager = GetNode<CombatManager>("CombatManager");
         _endTurnButton.Pressed += EndTurnButtonOnPressed;
+        _musicPlayer = GetNode<AudioStreamPlayer2D>("MusicPlayer");
+        _musicPlayer.Play();
     }
 
     private void EndTurnButtonOnPressed()
@@ -38,6 +41,11 @@ public partial class Game : Node2D
         }
 
         GameUtils.CombatEntities.Clear();
+
+        if (_musicPlayer != null)
+        {
+            _musicPlayer.Stop();
+        }
 
         // Clean up resources
         ResourceManager.Cleanup();

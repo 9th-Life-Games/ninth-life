@@ -25,6 +25,7 @@ public partial class CombatManager : Node2D
     private int _rollValue;
     private bool _shouldLog;
     private TurnOrderDisplay _turnOrderDisplay;
+    public AudioStreamPlayer2D AttackSound { get; private set; }
     private Player FirstAlly { get; set; }
     public Player FirstEnemy { get; private set; }
     public bool HasAttacked { get; private set; }
@@ -65,6 +66,7 @@ public partial class CombatManager : Node2D
         _rollIndicator = GetNode<Node2D>("../RollIndicator");
         _attackButton = GetNode<Button>("../Attack");
         _defenseDraw = GetNode<Node2D>("../DefenseDraw");
+        AttackSound = GetNode<AudioStreamPlayer2D>("../AttackSound");
 
         // Set up UI manager with required references
         _combatUiManager.SetButtons(_endTurnButton, _attackButton);

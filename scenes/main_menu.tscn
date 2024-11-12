@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://ee0drjsaektx"]
+[gd_scene load_steps=17 format=3 uid="uid://ee0drjsaektx"]
 
 [ext_resource type="Script" path="res://scripts/menu/MainMenu.cs" id="1_c2em3"]
 [ext_resource type="Texture2D" uid="uid://bdm1njhkxoco7" path="res://assets/Backgrounds/Selectscreen.png" id="2_dwqd4"]
@@ -15,6 +15,7 @@
 [ext_resource type="Texture2D" uid="uid://b4n8rqqd4ghua" path="res://assets/Card Art/armor/heavyarmor/king_heavyarmor.png" id="11_cn8g7"]
 [ext_resource type="Texture2D" uid="uid://c5lwflf41ycnk" path="res://assets/Card Art/armor/lightarmor/king_lightarmor.png" id="13_shtxr"]
 [ext_resource type="FontFile" uid="uid://diqt2vii6tchx" path="res://assets/Fonts/CloisterBlack.ttf" id="15_2sie1"]
+[ext_resource type="AudioStream" uid="uid://6xiv3uxes1pn" path="res://assets/Music/Title_Screen_Alt.mp3" id="16_65b7g"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -141,3 +142,6 @@ theme_override_fonts/font = ExtResource("15_2sie1")
 theme_override_font_sizes/font_size = 48
 text = "Skull
 "
+
+[node name="MusicPlayer" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("16_65b7g")

@@ -24,6 +24,7 @@ public partial class MainMenu : Control
     private TextureButton _lightArmorButton;
     private TextureButton _longbladeButton;
     private TextureButton _maceButton;
+    private AudioStreamPlayer2D _musicPlayer;
     private TextureButton _shortbladeButton;
     private Player _skull;
     private SuitSelection _weaponSelection;
@@ -32,6 +33,11 @@ public partial class MainMenu : Control
     {
         if (@event is InputEventKey { Pressed: true, Keycode: Key.Escape })
         {
+            if (_musicPlayer != null)
+            {
+                _musicPlayer.Stop();
+            }
+
             GetTree().Quit();
         }
     }
@@ -47,6 +53,9 @@ public partial class MainMenu : Control
         WatchSuitSelections();
 
         _continueButton.Pressed += OnPlayGamePressed;
+
+        _musicPlayer = GetNode<AudioStreamPlayer2D>("MusicPlayer");
+        _musicPlayer.Play();
     }
 
     private void InitNodes()

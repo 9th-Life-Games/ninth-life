@@ -181,8 +181,7 @@ public partial class MainMenu : Control
             "Hope",
             ResourceManager.Load<Texture>("res://assets/Character Sprites/Hope/hope_sprite.png"),
             _hopePos,
-            true,
-            1
+            true
         );
 
         _drinker = GameUtils.InstantiateCombatEntity(

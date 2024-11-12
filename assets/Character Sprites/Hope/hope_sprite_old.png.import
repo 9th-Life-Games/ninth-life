@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bwn0wuyy3qa8y"
-path="res://.godot/imported/hope_sprite_rs.png-7e4392742aad08e6b81c94b01695ef4a.ctex"
+uid="uid://bmr7oa0ssj3gk"
+path="res://.godot/imported/hope_sprite_old.png-a56e0b79a545accf713f20f8146c167b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/Character Sprites/Hope/hope_sprite_rs.png"
-dest_files=["res://.godot/imported/hope_sprite_rs.png-7e4392742aad08e6b81c94b01695ef4a.ctex"]
+source_file="res://assets/Character Sprites/Hope/hope_sprite_old.png"
+dest_files=["res://.godot/imported/hope_sprite_old.png-a56e0b79a545accf713f20f8146c167b.ctex"]
 
 [params]
 

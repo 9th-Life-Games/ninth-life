@@ -73,8 +73,8 @@ public class AttackMode : ICombatMode
             return;
         }
 
+        _combatManager.AttackSound.Play();
         _combatManager.ExecuteAttack(TargetPlayer);
-        // _combatManager.ExitCurrentMode();
     }
 
     private void CycleTargetForward()

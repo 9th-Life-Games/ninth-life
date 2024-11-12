@@ -19,6 +19,7 @@ public partial class Player : Node2D
 
     private const int HandSize = 4;
     private const float AnimationSpeed = .25f;
+    private AnimationPlayer _animationPlayer;
     private Button _attackButton;
     private StringName _combatEntitiesAdded;
     private int _currentHealth;
@@ -59,6 +60,16 @@ public partial class Player : Node2D
 
         DrawCards(HandSize, .01);
         PlayerFinishedDrawing += EnablePlayerHand;
+
+        SetupIdleAnimation();
+    }
+
+    private void SetupIdleAnimation()
+    {
+        _animationPlayer = GetNode<AnimationPlayer>("AnimationPlayer");
+
+        // Play the idle animation
+        _animationPlayer.Play("idle");
     }
 
     public void DrawCardForDefense(Action callback)
@@ -415,5 +426,10 @@ public partial class Player : Node2D
         }
 
         Deck.Clear();
+
+        if (_animationPlayer != null)
+        {
+            _animationPlayer.Stop();
+        }
     }
 }

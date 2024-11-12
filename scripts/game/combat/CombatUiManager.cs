@@ -7,7 +7,7 @@ public class CombatUiManager
 {
     private Button _attackButton;
     private Button _endTurnButton;
-    public Player LastAlly { get; private set; }
+    private Player LastAlly { get; set; }
     public Player LastEnemy { get; private set; }
 
     public void SetButtons(Button endTurnButton, Button attackButton)

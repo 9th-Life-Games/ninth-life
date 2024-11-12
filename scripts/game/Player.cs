@@ -74,10 +74,10 @@ public partial class Player : Node2D
         };
     }
 
-    private void OnCardPlayed(int cardsPlayed)
+    private void OnCardPlayed()
     {
-        CurrentCardPlays = cardsPlayed;
-        if (cardsPlayed == TotalCardPlays && IsAlly)
+        CurrentCardPlays++;
+        if (CurrentCardPlays == TotalCardPlays && IsAlly)
         {
             SlideHandDisabled(false);
         }
@@ -88,6 +88,7 @@ public partial class Player : Node2D
     {
         DisablePlayerHand();
         TurnIndicator.Visible = true;
+        CurrentCardPlays = 0;
         int amountToDraw = HandSize - _hand.GetChildren().Count;
         DrawCards(amountToDraw, .5);
 
@@ -101,7 +102,6 @@ public partial class Player : Node2D
             {
                 _attackButton.Disabled = false;
                 _attackButton.ButtonPressed = false;
-                _hand.ResetPlays();
                 EnablePlayerHand();
             }
         };

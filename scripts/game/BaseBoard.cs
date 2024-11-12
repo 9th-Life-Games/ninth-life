@@ -155,7 +155,6 @@ public partial class BaseBoard : Node2D
             return;
         }
 
-        Tween tween = GetTree().CreateTween().SetParallel();
         const float animationSpeed = 0.1f;
 
         switch (cards.Count)
@@ -179,6 +178,7 @@ public partial class BaseBoard : Node2D
         for (int i = 0; i < cards.Count - 1; i++)
         {
             float xPos = -47 + (spacing * i);
+            Tween tween = GetTree().CreateTween().SetParallel();
             tween.TweenProperty(cards[i], "position", new Vector2(xPos, 0), animationSpeed);
         }
 

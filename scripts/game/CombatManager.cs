@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using NinthLife.scripts.game.combat;
-using NinthLife.scripts.utils;
 
 namespace NinthLife.scripts.game;
 
@@ -14,9 +13,9 @@ public partial class CombatManager : Node2D
     private Button _attackButton;
     private Node2D _defenseDraw;
     private Button _endTurnButton;
-    private bool _hasAttacked;
     private bool _isInAttackMode;
     private bool _isInPreviewMode;
+    private CombatModeManager _modeManager;
     private Player _playerToAttack;
     private int _playerToAttackIndex;
     private Player _previewedPlayer;
@@ -26,56 +25,24 @@ public partial class CombatManager : Node2D
     private int _rollValue;
     private bool _shouldLog;
     private TurnOrderDisplay _turnOrderDisplay;
-    public Player FirstAlly { get; private set; }
+    private Player FirstAlly { get; set; }
     public Player FirstEnemy { get; private set; }
+    public bool HasAttacked { get; private set; }
 
     public override void _Input(InputEvent @event)
     {
-        if (_isInAttackMode)
+        _modeManager.Update(@event);
+        if (_modeManager.CurrentMode is not AttackMode && _modeManager.CurrentMode is not PreviewMode)
         {
-            if (Input.IsActionPressed("accept"))
+            if (Input.IsActionPressed("previous_preview"))
             {
-                _isInAttackMode = false;
-                _attackButton.Disabled = true;
-                _hasAttacked = true;
-                RollForAttack();
-                _playerToAttack.DrawCardForDefense(() =>
-                {
-                    _endTurnButton.Disabled = false;
-                    _combatTurnManager.EnemyTurnOrder.ForEach(player =>
-                    {
-                        player.SetSelectedEnemy(false);
-                        player.SetAttackModeIndicator(false);
-                        if (_combatTurnManager.CurrentPlayer.CurrentCardPlays <
-                            _combatTurnManager.CurrentPlayer.TotalCardPlays)
-                        {
-                            CombatUiManager.ShowHand(_combatTurnManager.CurrentPlayer, true);
-                        }
-                    });
-                });
+                _modeManager.EnterMode(CombatModeManager.CombatModeType.Preview, false);
             }
-
-            if (Input.IsActionJustPressed("previous_preview"))
+            else if (Input.IsActionPressed("next_preview"))
             {
-                CycleAttackModeBackward();
-            }
-            else if (Input.IsActionJustPressed("next_preview"))
-            {
-                CycleAttackModeForward();
+                _modeManager.EnterMode(CombatModeManager.CombatModeType.Preview);
             }
         }
-        else
-        {
-            if (Input.IsActionJustPressed("previous_preview"))
-            {
-                CyclePreviewBackward();
-            }
-            else if (Input.IsActionJustPressed("next_preview"))
-            {
-                CyclePreviewForward();
-            }
-        }
-
 
         if (Input.IsActionJustPressed("next_turn") && _combatTurnManager.CurrentPlayer.IsAlly &&
             _combatTurnManager.CurrentPlayer.IsHandEnabled)
@@ -86,25 +53,48 @@ public partial class CombatManager : Node2D
 
     public override void _Ready()
     {
+        InitializeNodes();
+        InitializeComponents();
+        SetupEventHandlers();
+    }
+
+    private void InitializeNodes()
+    {
         _turnOrderDisplay = GetNode<TurnOrderDisplay>("../TurnOrderDisplay");
         _endTurnButton = GetNode<Button>("../EndTurn");
         _rollIndicator = GetNode<Node2D>("../RollIndicator");
         _attackButton = GetNode<Button>("../Attack");
         _defenseDraw = GetNode<Node2D>("../DefenseDraw");
-        _defenseDraw.ChildEnteredTree += OnChildEnteredTree;
-        _attackButton.Toggled += AttackButtonOnPressed;
+
+        // Set up UI manager with required references
         _combatUiManager.SetButtons(_endTurnButton, _attackButton);
+    }
+
+    private void InitializeComponents()
+    {
+        // Initialize combat entities
         _combatTurnManager.InitializePlayers(this, _turnOrderDisplay);
         SetInitialAlliesAndEnemies(GetChildren().OfType<Player>());
+
+        // Initialize UI for first turn
         _combatUiManager.InitPlayerUi(
             _combatTurnManager.CurrentPlayer,
             FirstAlly,
             FirstEnemy
         );
+
+        _modeManager = new CombatModeManager(this, _combatUiManager, _combatTurnManager);
+
         if (!_combatTurnManager.CurrentPlayer.IsAlly)
         {
             InitEnemyAi();
         }
+    }
+
+    private void SetupEventHandlers()
+    {
+        _defenseDraw.ChildEnteredTree += OnDefenseDrawChildEnteredTree;
+        _attackButton.Toggled += AttackButtonOnPressed;
     }
 
     private void SetInitialAlliesAndEnemies(IEnumerable<Player> players)
@@ -122,38 +112,43 @@ public partial class CombatManager : Node2D
         }
     }
 
-    private void OnChildEnteredTree(Node node)
+    private void OnDefenseDrawChildEnteredTree(Node node)
     {
         ((Card)node).CardLeftTree += DiscardDefenseCard;
     }
 
     private void DiscardDefenseCard(Card card)
     {
-        _playerToAttack.PlayerBoard.AddCard(card, true);
+        AttackMode currentMode = _modeManager.CurrentMode as AttackMode;
+        currentMode?.TargetPlayer.PlayerBoard.AddCard(card, true);
+        ExitCurrentMode();
     }
 
     private void AttackButtonOnPressed(bool pressed)
     {
-        _endTurnButton.Disabled = pressed;
-        _isInAttackMode = pressed;
-        _combatTurnManager.EnemyTurnOrder.ForEach(player => player.SetAttackModeIndicator(pressed));
-        if (!pressed)
+        _modeManager.EnterMode(
+            pressed ? CombatModeManager.CombatModeType.Attack : CombatModeManager.CombatModeType.None);
+    }
+
+    public void ExecuteAttack(Player target)
+    {
+        _attackButton.Disabled = true;
+        HasAttacked = true;
+        RollForAttack();
+
+        target.DrawCardForDefense(() =>
         {
+            _endTurnButton.Disabled = false;
             if (_combatTurnManager.CurrentPlayer.CurrentCardPlays < _combatTurnManager.CurrentPlayer.TotalCardPlays)
             {
                 CombatUiManager.ShowHand(_combatTurnManager.CurrentPlayer, true);
             }
+        });
+    }
 
-            _playerToAttack?.SetSelectedEnemy(false);
-        }
-        else
-        {
-            Logger.Debug("Toggled false");
-            FirstEnemy.SetSelectedEnemy(true);
-            _playerToAttack = FirstEnemy;
-            _playerToAttackIndex = 0;
-            _combatTurnManager.CurrentPlayer.SlideHandDisabled();
-        }
+    private void ExitCurrentMode()
+    {
+        _modeManager.ExitCurrentMode();
     }
 
     private void RollForAttack()
@@ -164,220 +159,6 @@ public partial class CombatManager : Node2D
         _rollIndicator.GetNode<Label>("Label").Text = $"{_rollValue}";
         _rollIndicator.GetNode<AnimationPlayer>("AnimationPlayer").Play("show_result");
     }
-
-
-    private void CyclePreviewForward()
-    {
-        if (!_combatTurnManager.CurrentPlayer.IsAlly)
-        {
-            return;
-        }
-
-        if (_previewIndex == -1)
-        {
-            _previewIndex = _combatTurnManager.GetCurrentPlayerIndex();
-        }
-
-        _previewIndex = (_previewIndex + 1) % _combatTurnManager.GetTurnOrderCount();
-        Player playerToPreview = _combatTurnManager.GetPlayerToPreview(_previewIndex);
-
-        StartPreview(playerToPreview);
-    }
-
-    private void CyclePreviewBackward()
-    {
-        if (!_combatTurnManager.CurrentPlayer.IsAlly)
-        {
-            return;
-        }
-
-        if (_previewIndex == -1)
-        {
-            _previewIndex = _combatTurnManager.GetCurrentPlayerIndex();
-        }
-
-        _previewIndex--;
-        if (_previewIndex < 0)
-        {
-            _previewIndex = _combatTurnManager.GetTurnOrderCount() - 1;
-        }
-
-        Player playerToPreview = _combatTurnManager.GetPlayerToPreview(_previewIndex);
-
-        StartPreview(playerToPreview);
-    }
-
-
-    private void CycleAttackModeBackward()
-    {
-        if (_playerToAttackIndex <= 0)
-        {
-            _playerToAttack.SetSelectedEnemy(false);
-            _playerToAttackIndex = _combatTurnManager.EnemyTurnOrder.Count - 1;
-        }
-        else
-        {
-            _playerToAttack.SetSelectedEnemy(false);
-            _playerToAttackIndex--;
-        }
-
-        _playerToAttack = _combatTurnManager.EnemyTurnOrder[_playerToAttackIndex];
-        _playerToAttack.SetSelectedEnemy(true);
-    }
-
-    private void CycleAttackModeForward()
-    {
-        if (_playerToAttackIndex >= _combatTurnManager.EnemyTurnOrder.Count - 1)
-        {
-            _playerToAttack.SetSelectedEnemy(false);
-            _playerToAttackIndex = 0;
-        }
-        else
-        {
-            _playerToAttack.SetSelectedEnemy(false);
-            _playerToAttackIndex++;
-        }
-
-        _playerToAttack = _combatTurnManager.EnemyTurnOrder[_playerToAttackIndex];
-        _playerToAttack.SetSelectedEnemy(true);
-    }
-
-    private void StartPreview(Player playerToPreview)
-    {
-        Player currentPlayer = _combatTurnManager.CurrentPlayer;
-        Player firstEnemy = FirstEnemy;
-        Player lastEnemy = _combatUiManager.LastEnemy;
-        Logger.Debug("Starting Preview", _shouldLog);
-        // If previewing current player, end preview instead
-        if (playerToPreview == currentPlayer)
-        {
-            EndPreview(currentPlayer, true);
-            return;
-        }
-
-        EndPreview(currentPlayer, playerToPreview.IsAlly);
-        Logger.Debug($"Start: [1] Showing player to preview: {playerToPreview.PlayerName}'s board", _shouldLog);
-        CombatUiManager.ShowBoard(playerToPreview, true);
-        if (_previouslyShownPlayer == null && lastEnemy == null && !playerToPreview.IsAlly &&
-            playerToPreview != firstEnemy)
-        {
-            CombatUiManager.ShowBoard(firstEnemy, false);
-        }
-
-        _isInPreviewMode = true;
-        currentPlayer.TurnIndicatorPreviewColor(true);
-        playerToPreview.ShowPreviewIndicator(true);
-
-        _previouslyShownPlayer = _previewedPlayer;
-
-        _previewedPlayer = playerToPreview;
-
-        // Disable UI elements during preview
-        _combatUiManager.SetNextButtonState(false);
-        Logger.Debug("****Disabling");
-        _combatUiManager.SetAttackButtonState(false);
-
-        switch (_previewedPlayer.IsAlly)
-        {
-            case true:
-                Logger.Debug($"Start: Hiding current player: {currentPlayer.PlayerName}'s board", _shouldLog);
-                CombatUiManager.ShowBoard(currentPlayer, false);
-                CombatUiManager.ShowHand(currentPlayer, false);
-                CombatUiManager.ShowHand(playerToPreview, true, true);
-                break;
-            case false:
-                CombatUiManager.ShowHand(currentPlayer, true, true);
-                if (_previouslyShownPlayer is { IsAlly: true })
-                {
-                    CombatUiManager.ShowHand(_previouslyShownPlayer, false);
-                }
-
-                if (playerToPreview != lastEnemy && lastEnemy != null)
-                {
-                    Logger.Debug($"Start: [2] Showing player to preview: {playerToPreview.PlayerName}'s board",
-                        _shouldLog);
-                    CombatUiManager.ShowBoard(playerToPreview, true);
-                    Logger.Debug($"Start: Hiding last enemy: {lastEnemy.PlayerName}'s board", _shouldLog);
-                    CombatUiManager.ShowBoard(lastEnemy, false);
-                }
-
-                break;
-        }
-    }
-
-    private void EndPreview(Player currentPlayer, bool isAllyNext = false)
-    {
-        if (!_isInPreviewMode)
-        {
-            return;
-        }
-
-        Logger.Debug("Ending Preview", _shouldLog);
-
-        Player lastEnemy = _combatUiManager.LastEnemy;
-
-        _previewedPlayer.ShowPreviewIndicator(false);
-
-        CombatUiManager.ShowBoard(currentPlayer, true);
-
-        if (lastEnemy != null)
-        {
-            Logger.Debug($"End: [1] Showing last enemy: {lastEnemy.PlayerName}'s board", _shouldLog);
-            CombatUiManager.ShowBoard(lastEnemy, true);
-        }
-
-        if (_previewedPlayer.IsAlly && _previewedPlayer != currentPlayer)
-        {
-            CombatUiManager.ShowHand(_previewedPlayer, false);
-        }
-
-        // Re-enable UI elements
-        Logger.Debug("****Enabling");
-        _combatUiManager.SetNextButtonState(true);
-        if (!_hasAttacked)
-        {
-            _combatUiManager.SetAttackButtonState(true);
-        }
-
-        if (currentPlayer.IsAlly)
-        {
-            if (currentPlayer.CurrentCardPlays >= currentPlayer.TotalCardPlays)
-            {
-                CombatUiManager.ShowHand(currentPlayer, true, true);
-            }
-            else
-            {
-                CombatUiManager.ShowHand(currentPlayer, true);
-            }
-        }
-
-        if (_previewedPlayer != null)
-        {
-            Logger.Debug("This is the condition that's not handling stuff right", _shouldLog);
-            Logger.Debug($"End: Hiding previewed player: {_previewedPlayer.PlayerName}'s board", _shouldLog);
-            CombatUiManager.ShowBoard(_previewedPlayer, false);
-        }
-
-        if (!_previewedPlayer.IsAlly && isAllyNext)
-        {
-            Logger.Debug(
-                $"End: [2] Showing {(lastEnemy != null ? "last enemy" : "first enemy")}: {(lastEnemy != null ? lastEnemy.PlayerName : FirstEnemy.PlayerName)}'s board",
-                _shouldLog
-            );
-            CombatUiManager.ShowBoard(lastEnemy ?? FirstEnemy, true);
-        }
-        else if (_previewedPlayer.IsAlly && !isAllyNext)
-        {
-            Logger.Debug($"End: Hiding first enemy: {FirstEnemy.PlayerName}'s board", _shouldLog);
-            CombatUiManager.ShowBoard(FirstEnemy, false);
-        }
-
-        _isInPreviewMode = false;
-        currentPlayer.TurnIndicatorPreviewColor(false);
-        _previewedPlayer = null;
-        _previouslyShownPlayer = null;
-    }
-
 
     public void NextTurn()
     {
@@ -417,7 +198,7 @@ public partial class CombatManager : Node2D
         // Handle UI turn change
         _combatUiManager.ShowPlayerUi(currentPlayer);
 
-        _hasAttacked = false;
+        HasAttacked = false;
         currentPlayer.StartTurn();
     }
 

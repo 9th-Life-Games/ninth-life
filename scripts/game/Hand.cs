@@ -8,22 +8,16 @@ namespace NinthLife.scripts.game;
 public partial class Hand : Node2D
 {
     [Signal]
-    public delegate void CardPlayedEventHandler(int cardPlays);
+    public delegate void CardPlayedEventHandler();
 
     private const float AnimationSpeed = .1f;
 
     private BaseBoard _playerBoard;
-    public int CardsPlayed { get; private set; }
 
     public override void _Ready()
     {
         ChildEnteredTree += OnChildEnteredTree;
         PositionCards();
-    }
-
-    public void ResetPlays()
-    {
-        CardsPlayed = 0;
     }
 
     private void OnChildEnteredTree(Node node)
@@ -33,8 +27,7 @@ public partial class Hand : Node2D
 
     private void OnChildExitedTree(Card card)
     {
-        CardsPlayed++;
-        EmitSignal(SignalName.CardPlayed, CardsPlayed);
+        EmitSignal(SignalName.CardPlayed);
         _playerBoard.AddCard(card);
         GetTree().CreateTimer(.00000001).Timeout += PositionCards;
     }

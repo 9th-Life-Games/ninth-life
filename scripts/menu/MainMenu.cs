@@ -11,8 +11,8 @@ public partial class MainMenu : Control
     private readonly Vector2 _goblinPos = new(890, 193);
     private readonly Vector2 _goblinThreePos = new(750, 193);
     private readonly Vector2 _goblinTwoPos = new(820, 193);
-    private readonly Vector2 _hopePos = new(60, 145);
-    private readonly Vector2 _skullPos = new(130, 155);
+    private readonly Vector2 _hopePos = new(50, 145);
+    private readonly Vector2 _skullPos = new(140, 155);
     private SuitSelection _armorSelection;
     private Button _continueButton;
     private Player _drinker;

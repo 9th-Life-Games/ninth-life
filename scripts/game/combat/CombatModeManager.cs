@@ -25,9 +25,12 @@ public class CombatModeManager
 
     public ICombatMode CurrentMode { get; private set; }
 
-    public void EnterMode(CombatModeType modeType, bool isForward = true)
+    public void EnterMode(CombatModeType modeType, bool isForward = true, Player playerToPreview = null)
     {
-        ExitCurrentMode();
+        if (playerToPreview != null)
+        {
+            ExitCurrentMode();
+        }
 
         if (modeType == CombatModeType.None)
         {
@@ -37,11 +40,11 @@ public class CombatModeManager
         CurrentMode = _modes[modeType];
         if (CurrentMode is PreviewMode previewMode)
         {
-            previewMode.Enter(isForward);
+            previewMode.Enter(isForward, playerToPreview);
         }
         else
         {
-            CurrentMode.Enter();
+            CurrentMode.Enter(isForward);
         }
     }
 

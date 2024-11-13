@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using NinthLife.scripts.game.combat;
+using NinthLife.scripts.utils;
 
 namespace NinthLife.scripts.game;
 
@@ -13,17 +14,9 @@ public partial class CombatManager : Node2D
     private Button _attackButton;
     private Node2D _defenseDraw;
     private Button _endTurnButton;
-    private bool _isInAttackMode;
-    private bool _isInPreviewMode;
     private CombatModeManager _modeManager;
-    private Player _playerToAttack;
-    private int _playerToAttackIndex;
-    private Player _previewedPlayer;
-    private int _previewIndex = -1;
-    private Player _previouslyShownPlayer;
     private Node2D _rollIndicator;
     private int _rollValue;
-    private bool _shouldLog;
     private TurnOrderDisplay _turnOrderDisplay;
     public AudioStreamPlayer2D AttackSound { get; private set; }
     private Player FirstAlly { get; set; }
@@ -103,6 +96,8 @@ public partial class CombatManager : Node2D
     {
         foreach (Player player in players)
         {
+            player.PlayerClicked += OnPlayerClicked;
+
             if (player.IsAlly)
             {
                 FirstAlly ??= player;
@@ -114,14 +109,24 @@ public partial class CombatManager : Node2D
         }
     }
 
+    private void OnPlayerClicked(Player player)
+    {
+        if (_modeManager.CurrentMode is not AttackMode && _modeManager.CurrentMode is not PreviewMode)
+        {
+            _modeManager.EnterMode(CombatModeManager.CombatModeType.Preview, false, player);
+        }
+    }
+
     private void OnDefenseDrawChildEnteredTree(Node node)
     {
+        Logger.Debug("OnDefenseDrawChildEnteredTree");
         ((Card)node).CardLeftTree += DiscardDefenseCard;
     }
 
     private void DiscardDefenseCard(Card card)
     {
         AttackMode currentMode = _modeManager.CurrentMode as AttackMode;
+        Logger.Debug("Adding card to player discard pile***");
         currentMode?.TargetPlayer.PlayerBoard.AddCard(card, true);
         ExitCurrentMode();
     }
@@ -231,14 +236,11 @@ public partial class CombatManager : Node2D
 
     private void OnEnemyFinishedTurn()
     {
-        // Create a Random instance
-        Random random = new();
-
-        // Generate a random index between 0 and the number of allies minus 1
-        int randomAllyIndex = random.Next(0, _combatTurnManager.AllyTurnOrder.Count);
+        _modeManager.EnterMode(CombatModeManager.CombatModeType.Attack, false);
+        AttackMode currentMode = _modeManager.CurrentMode as AttackMode;
 
         // Execute attack on the randomly selected ally
-        GetTree().CreateTimer(1.75).Timeout += () => ExecuteAttack(_combatTurnManager.AllyTurnOrder[randomAllyIndex]);
+        GetTree().CreateTimer(1.75).Timeout += () => ExecuteAttack(currentMode?.TargetPlayer);
 
         // Continue with turn transition after delay
         GetTree().CreateTimer(4).Timeout += NextTurn;

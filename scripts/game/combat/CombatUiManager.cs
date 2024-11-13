@@ -129,4 +129,12 @@ public class CombatUiManager
 
         ShowBoard(player, true);
     }
+
+    public void SetLastEnemy(Player enemy)
+    {
+        if (!enemy.IsAlly)
+        {
+            LastEnemy = enemy;
+        }
+    }
 }

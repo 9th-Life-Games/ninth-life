@@ -15,7 +15,13 @@ public partial class Player : Node2D
     public delegate void EnemyFinishedTurnEventHandler();
 
     [Signal]
+    public delegate void PlayerClickedEventHandler(Player player);
+
+    [Signal]
     public delegate void PlayerFinishedDrawingEventHandler();
+
+    [Signal]
+    public delegate void PlayerMouseHoveredInEventHandler(Player player);
 
     private const int HandSize = 4;
     private const float AnimationSpeed = .25f;
@@ -24,10 +30,12 @@ public partial class Player : Node2D
     private StringName _combatEntitiesAdded;
     private int _currentHealth;
     private Node2D _defenseDraw;
+    private Button _endTurnButton;
     private Hand _hand;
     private int _initiativeBonus;
 
     private int _maxHealth;
+    private Button _playerButton;
     public int CurrentCardPlays { get; private set; }
     public int TotalCardPlays { get; private set; } = 2;
     public int MasteryBonus { get; private set; } = 3;
@@ -53,6 +61,10 @@ public partial class Player : Node2D
         _hand.CardPlayed += OnCardPlayed;
         _defenseDraw = GetNode<Node2D>("../../DefenseDraw");
         _attackButton = GetNode<Button>("../../Attack");
+        _endTurnButton = GetNode<Button>("../../EndTurn");
+        _playerButton = GetNode<Button>("Sprite2D/Button");
+        _playerButton.Pressed += OnPlayerButtonPressed;
+        _playerButton.MouseEntered += OnPlayerButtonMouseEntered;
 
         SetIndicators();
 
@@ -62,6 +74,16 @@ public partial class Player : Node2D
         PlayerFinishedDrawing += EnablePlayerHand;
 
         SetupIdleAnimation();
+    }
+
+    private void OnPlayerButtonPressed()
+    {
+        EmitSignal(SignalName.PlayerClicked, this);
+    }
+
+    private void OnPlayerButtonMouseEntered()
+    {
+        EmitSignal(SignalName.PlayerMouseHoveredIn, this);
     }
 
     private void SetupIdleAnimation()
@@ -121,6 +143,11 @@ public partial class Player : Node2D
         CurrentCardPlays = 0;
         int amountToDraw = HandSize - _hand.GetChildren().Count;
         DrawCards(amountToDraw, .5);
+        if (!IsAlly)
+        {
+            _attackButton.Disabled = true;
+            _endTurnButton.Disabled = true;
+        }
 
         GetTree().CreateTimer(amountToDraw * .6).Timeout += () =>
         {
@@ -385,15 +412,21 @@ public partial class Player : Node2D
         switch (PlayerName)
         {
             case "Skull":
-                _initiativeBonus += 200;
+                // _initiativeBonus += 200;
                 break;
             case "Hope":
+                // _initiativeBonus += 300;
+                break;
+            case "Drinker":
                 // _initiativeBonus += 300;
                 break;
             case "Goblin":
                 // _initiativeBonus += 200;
                 break;
             case "Goblin 2":
+                // _initiativeBonus += 300;
+                break;
+            case "Goblin 3":
                 // _initiativeBonus += 300;
                 break;
         }

@@ -46,7 +46,12 @@ public partial class GameUtils : Node
         sprite.Hframes = hFrames;
         sprite.Position = position;
 
+        float spriteWidth = sprite.Texture.GetWidth();
         float spriteHeight = sprite.Texture.GetHeight();
+
+        Button button = combatEntity.GetNode<Button>("Sprite2D/Button");
+        button.Size = new Vector2(spriteWidth / 3, spriteHeight);
+        button.Position = new Vector2(-spriteWidth / 3 / 2, -spriteHeight / 2);
 
         Polygon2D turnIndicator = combatEntity.GetNode<Polygon2D>("TurnIndicator");
         turnIndicator.Position = new Vector2(position.X, position.Y + (-spriteHeight / 2) - 20);
@@ -69,7 +74,7 @@ public partial class GameUtils : Node
         {
             foreach (Card card in player.Deck)
             {
-                card.Texture = null; // Clear texture reference
+                card.Texture = null;
                 card.QueueFree();
             }
 

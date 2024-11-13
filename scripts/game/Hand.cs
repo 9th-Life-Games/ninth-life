@@ -28,6 +28,7 @@ public partial class Hand : Node2D
     private void OnChildExitedTree(Card card)
     {
         EmitSignal(SignalName.CardPlayed);
+        Logger.Debug("Adding card to player board***");
         _playerBoard.AddCard(card);
         GetTree().CreateTimer(.00000001).Timeout += PositionCards;
     }

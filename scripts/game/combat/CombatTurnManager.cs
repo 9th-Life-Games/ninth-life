@@ -6,9 +6,9 @@ namespace NinthLife.scripts.game.combat;
 
 public class CombatTurnManager
 {
-    private readonly List<Player> _turnOrder = new();
     public readonly List<Player> AllyTurnOrder = new();
     public readonly List<Player> EnemyTurnOrder = new();
+    public readonly List<Player> TurnOrder = new();
 
     private TurnOrderDisplay _turnOrderDisplay;
     public Player CurrentPlayer { get; private set; }
@@ -23,7 +23,7 @@ public class CombatTurnManager
         )
         {
             CurrentPlayer ??= player;
-            _turnOrder.Add(player);
+            TurnOrder.Add(player);
             _turnOrderDisplay.AddAvatar(player);
             if (player.IsAlly)
             {
@@ -42,22 +42,27 @@ public class CombatTurnManager
 
     public Player GetNextPlayer()
     {
-        return _turnOrder[1];
+        return TurnOrder[1];
     }
 
     public int GetCurrentPlayerIndex()
     {
-        return _turnOrder.IndexOf(CurrentPlayer);
+        return TurnOrder.IndexOf(CurrentPlayer);
+    }
+
+    public int GetPlayerIndex(Player player)
+    {
+        return TurnOrder.IndexOf(player);
     }
 
     public int GetTurnOrderCount()
     {
-        return _turnOrder.Count;
+        return TurnOrder.Count;
     }
 
     public Player GetPlayerToPreview(int index)
     {
-        return _turnOrder[index];
+        return TurnOrder[index];
     }
 
     public Player GetLastAlly()
@@ -69,8 +74,8 @@ public class CombatTurnManager
     {
         CurrentPlayer.EndTurn();
         _turnOrderDisplay.CycleAvatars(CurrentPlayer);
-        _turnOrder.Remove(CurrentPlayer);
-        _turnOrder.Add(CurrentPlayer);
+        TurnOrder.Remove(CurrentPlayer);
+        TurnOrder.Add(CurrentPlayer);
         CurrentPlayer = nextPlayer;
         return CurrentPlayer;
     }

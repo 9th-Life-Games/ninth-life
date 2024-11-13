@@ -138,7 +138,7 @@ public partial class CombatManager : Node2D
         HasAttacked = true;
         RollForAttack();
 
-        target.DrawCardForDefense(() =>
+        Card drawnCard = target.DrawCardForDefense(() =>
         {
             _endTurnButton.Disabled = false;
             if (_combatTurnManager.CurrentPlayer.CurrentCardPlays < _combatTurnManager.CurrentPlayer.TotalCardPlays)
@@ -146,6 +146,25 @@ public partial class CombatManager : Node2D
                 CombatUiManager.ShowHand(_combatTurnManager.CurrentPlayer, true);
             }
         });
+
+        int drawnValue = 0;
+        if (_combatTurnManager.CurrentPlayer.IsAlly)
+        {
+            drawnValue = drawnCard.NumericValue;
+        }
+        else
+        {
+            drawnValue = drawnCard.NumericValue > 11 ? 10 : drawnCard.NumericValue;
+        }
+
+        if (drawnValue > _rollValue)
+        {
+            target.PlayBlockAnimation();
+        }
+        else
+        {
+            target.PlayHitAnimation();
+        }
     }
 
     private void ExitCurrentMode()
@@ -212,6 +231,16 @@ public partial class CombatManager : Node2D
 
     private void OnEnemyFinishedTurn()
     {
-        GetTree().CreateTimer(1.5).Timeout += NextTurn;
+        // Create a Random instance
+        Random random = new();
+
+        // Generate a random index between 0 and the number of allies minus 1
+        int randomAllyIndex = random.Next(0, _combatTurnManager.AllyTurnOrder.Count);
+
+        // Execute attack on the randomly selected ally
+        GetTree().CreateTimer(1.75).Timeout += () => ExecuteAttack(_combatTurnManager.AllyTurnOrder[randomAllyIndex]);
+
+        // Continue with turn transition after delay
+        GetTree().CreateTimer(4).Timeout += NextTurn;
     }
 }

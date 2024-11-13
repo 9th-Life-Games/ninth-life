@@ -1,7 +1,35 @@
-[gd_scene load_steps=6 format=3 uid="uid://dntos7fy5n6ko"]
+[gd_scene load_steps=9 format=3 uid="uid://dntos7fy5n6ko"]
 
 [ext_resource type="Script" path="res://scripts/game/Player.cs" id="1_wps60"]
+[ext_resource type="Texture2D" uid="uid://bfig3w6gk0hv" path="res://assets/Character Sprites/Skull/skull_sprite.png" id="2_0l6nn"]
 [ext_resource type="Script" path="res://scripts/game/Hand.cs" id="2_addbm"]
+
+[sub_resource type="Animation" id="Animation_dwq8j"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame_coords")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [Vector2i(0, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Sprite2D:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 1, 1, 1)]
+}
 
 [sub_resource type="Animation" id="Animation_bbrlc"]
 resource_name = "idle"
@@ -20,24 +48,43 @@ tracks/0/keys = {
 "values": [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]
 }
 
-[sub_resource type="Animation" id="Animation_dwq8j"]
-length = 0.001
+[sub_resource type="Animation" id="Animation_2rpw8"]
+resource_name = "hit"
+length = 0.6
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("Sprite2D:frame_coords")
+tracks/0/path = NodePath("Sprite2D:modulate")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 1,
-"values": [Vector2i(0, 0)]
+"times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 1), Color(1, 0, 0, 1), Color(1, 1, 1, 1), Color(1, 0, 0, 1), Color(1, 1, 1, 1), Color(1, 0, 0, 1), Color(1, 1, 1, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_v41te"]
+resource_name = "block"
+length = 0.6
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 1), Color(0, 0, 1, 1), Color(1, 1, 1, 1), Color(0, 0, 1, 1), Color(1, 1, 1, 1), Color(0, 0, 1, 1), Color(1, 1, 1, 1)]
 }
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_4mrgg"]
 _data = {
 "RESET": SubResource("Animation_dwq8j"),
+"block": SubResource("Animation_v41te"),
+"hit": SubResource("Animation_2rpw8"),
 "idle": SubResource("Animation_bbrlc")
 }
 
@@ -45,6 +92,8 @@ _data = {
 script = ExtResource("1_wps60")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_0l6nn")
+hframes = 3
 
 [node name="Hand" type="Node2D" parent="."]
 position = Vector2(480, 850)

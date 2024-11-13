@@ -70,9 +70,27 @@ public partial class Player : Node2D
 
         // Play the idle animation
         _animationPlayer.Play("idle");
+
+        // Handle AnimationFinished
+        _animationPlayer.AnimationFinished += OnAnimationFinished;
     }
 
-    public void DrawCardForDefense(Action callback)
+    private void OnAnimationFinished(StringName animationName)
+    {
+        _animationPlayer.Play("idle");
+    }
+
+    public void PlayHitAnimation()
+    {
+        _animationPlayer.Play("hit");
+    }
+
+    public void PlayBlockAnimation()
+    {
+        _animationPlayer.Play("block");
+    }
+
+    public Card DrawCardForDefense(Action callback)
     {
         Card drawnCard = Deck[0];
         Deck.RemoveAt(0);
@@ -83,6 +101,7 @@ public partial class Player : Node2D
             drawnCard.ExitCard();
             callback.Invoke();
         };
+        return drawnCard;
     }
 
     private void OnCardPlayed()

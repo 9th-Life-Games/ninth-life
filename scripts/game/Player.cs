@@ -12,6 +12,9 @@ public partial class Player : Node2D
     public delegate void AllyHandEnabledEventHandler(bool enabled);
 
     [Signal]
+    public delegate void AllyTurnReadyEventHandler();
+
+    [Signal]
     public delegate void EnemyFinishedTurnEventHandler();
 
     [Signal]
@@ -135,6 +138,14 @@ public partial class Player : Node2D
         }
     }
 
+    public void SetButtonEnabled(bool enabled)
+    {
+        if (_playerButton != null)
+        {
+            _playerButton.Disabled = !enabled;
+        }
+    }
+
 
     public void StartTurn()
     {
@@ -160,6 +171,7 @@ public partial class Player : Node2D
                 _attackButton.Disabled = false;
                 _attackButton.ButtonPressed = false;
                 EnablePlayerHand();
+                EmitSignal(SignalName.AllyTurnReady);
             }
         };
     }

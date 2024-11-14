@@ -53,9 +53,6 @@ public partial class MainMenu : Control
         WatchSuitSelections();
 
         _continueButton.Pressed += OnPlayGamePressed;
-
-        _musicPlayer = GetNode<AudioStreamPlayer2D>("MusicPlayer");
-        _musicPlayer.Play();
     }
 
     private void InitNodes()
@@ -71,6 +68,9 @@ public partial class MainMenu : Control
         _heavyArmorButton = GetNode<TextureButton>("HeavyArmor");
 
         _continueButton = GetNode<Button>("ContinueButton");
+
+        _musicPlayer = GetNode<AudioStreamPlayer2D>("MusicPlayer");
+        _musicPlayer.Play();
     }
 
     private void SetupSuitToggles()

@@ -5,11 +5,14 @@ namespace NinthLife.scripts.game.combat;
 
 public class PreviewMode : ICombatMode
 {
+    public delegate void PreviewEndedEventHandler();
+
     private readonly CombatManager _combatManager;
     private readonly Player _firstEnemy;
-    private readonly bool _shouldLog;
+    private readonly bool _shouldLog = true;
     private readonly CombatTurnManager _turnManager;
     private readonly CombatUiManager _uiManager;
+
     private Player _previewedPlayer;
     private int _previewIndex = -1;
     private Player _previouslyShownPlayer;
@@ -24,42 +27,23 @@ public class PreviewMode : ICombatMode
 
     public void Enter(bool isForward = true, Player playerToPreview = null)
     {
-        _previewIndex = _turnManager.GetCurrentPlayerIndex();
-        _uiManager.SetNextButtonState(false);
-        _uiManager.SetAttackButtonState(false);
-        _turnManager.CurrentPlayer.TurnIndicatorPreviewColor(true);
+        Logger.Debug("Entering Preview Mode", _shouldLog);
+        InitializePreviewMode();
 
-        foreach (Player player in _turnManager.TurnOrder)
-        {
-            player.PlayerClicked += OnPlayerClicked;
-        }
-
-        // Show initial preview based on direction
         if (playerToPreview != null)
         {
             _previewIndex = _turnManager.GetPlayerIndex(playerToPreview);
             ShowPreview(playerToPreview);
+            return;
         }
-        else
-        {
-            // Initialize preview index based on direction
-            _previewIndex = isForward
-                ? _turnManager.GetCurrentPlayerIndex() + 1
-                : _turnManager.GetTurnOrderCount() - 1;
 
-            // Handle wraparound for forward direction
-            if (_previewIndex >= _turnManager.GetTurnOrderCount())
-            {
-                _previewIndex = 0;
-            }
-
-            ShowPreview(_turnManager.GetPlayerToPreview(_previewIndex));
-        }
+        InitializePreviewIndex(isForward);
+        ShowPreview(_turnManager.GetPlayerToPreview(_previewIndex));
     }
 
     public void Exit()
     {
-        Logger.Debug("****Removing listeners", _shouldLog);
+        Logger.Debug("Removing preview click listeners", _shouldLog);
         foreach (Player player in _turnManager.TurnOrder)
         {
             player.PlayerClicked -= OnPlayerClicked;
@@ -79,7 +63,35 @@ public class PreviewMode : ICombatMode
         }
         else if (inputEvent.IsActionPressed("next_preview"))
         {
+            Logger.Debug("CyclePreviewForward called", _shouldLog);
             CyclePreviewForward();
+        }
+    }
+
+    public event PreviewEndedEventHandler PreviewEnded;
+
+    private void InitializePreviewMode()
+    {
+        _previewIndex = _turnManager.GetCurrentPlayerIndex();
+        _uiManager.SetNextButtonState(false);
+        _uiManager.SetAttackButtonState(false);
+        _turnManager.CurrentPlayer.TurnIndicatorPreviewColor(true);
+
+        foreach (Player player in _turnManager.TurnOrder)
+        {
+            player.PlayerClicked += OnPlayerClicked;
+        }
+    }
+
+    private void InitializePreviewIndex(bool isForward)
+    {
+        _previewIndex = isForward
+            ? _turnManager.GetCurrentPlayerIndex() + 1
+            : _turnManager.GetTurnOrderCount() - 1;
+
+        if (_previewIndex >= _turnManager.GetTurnOrderCount())
+        {
+            _previewIndex = 0;
         }
     }
 
@@ -91,21 +103,22 @@ public class PreviewMode : ICombatMode
 
     private void CyclePreviewForward()
     {
-        Logger.Debug($"***Current preview index {_previewIndex}", _shouldLog);
+        Logger.Debug($"Current preview index: {_previewIndex}", _shouldLog);
+
         if (_previewIndex == -1)
         {
-            Logger.Debug("***CyclePreviewForward -1: setting index back to start", _shouldLog);
+            Logger.Debug("Preview index -1: setting to start", _shouldLog);
             _previewIndex = _turnManager.GetCurrentPlayerIndex();
         }
 
         _previewIndex++;
         if (_previewIndex > _turnManager.GetTurnOrderCount() - 1)
         {
-            Logger.Debug("***Preview > player count: setting index back to start", _shouldLog);
+            Logger.Debug("Preview index exceeded count: resetting to start", _shouldLog);
             _previewIndex = _turnManager.GetCurrentPlayerIndex();
         }
 
-        Logger.Debug($"***Next preview index: {_previewIndex}", _shouldLog);
+        Logger.Debug($"Next preview index: {_previewIndex}", _shouldLog);
         ShowPreview(_turnManager.GetPlayerToPreview(_previewIndex));
     }
 
@@ -122,7 +135,7 @@ public class PreviewMode : ICombatMode
             _previewIndex = _turnManager.GetTurnOrderCount() - 1;
         }
 
-        Logger.Debug($"***Previous preview index: {_previewIndex}", _shouldLog);
+        Logger.Debug($"Previous preview index: {_previewIndex}", _shouldLog);
         ShowPreview(_turnManager.GetPlayerToPreview(_previewIndex));
     }
 
@@ -130,63 +143,83 @@ public class PreviewMode : ICombatMode
     {
         Player currentPlayer = _turnManager.CurrentPlayer;
         Player lastEnemy = _uiManager.LastEnemy;
-        Logger.Debug("Starting Preview", _shouldLog);
+        Logger.Debug($"Starting Preview for: {playerToPreview.PlayerName}", _shouldLog);
 
-        // If previewing current player, end preview instead
         if (playerToPreview == currentPlayer)
         {
-            Logger.Debug("***Preview is the same as the current player", _shouldLog);
+            Logger.Debug("Preview is current player, ending preview", _shouldLog);
             EndPreview(currentPlayer, playerToPreview);
             return;
         }
 
         EndPreview(currentPlayer, playerToPreview);
+        HandleBoardTransitions(playerToPreview, currentPlayer, lastEnemy);
+        UpdatePreviewState(playerToPreview, currentPlayer);
+    }
 
-        Logger.Debug($"Start: [1] Showing player to preview: {playerToPreview.PlayerName}'s board", _shouldLog);
+    private void HandleBoardTransitions(Player playerToPreview, Player currentPlayer, Player lastEnemy)
+    {
+        Logger.Debug($"Showing board for: {playerToPreview.PlayerName}", _shouldLog);
         CombatUiManager.ShowBoard(playerToPreview, true);
-        if (_previouslyShownPlayer == null && lastEnemy == null && !playerToPreview.IsAlly &&
-            playerToPreview != _firstEnemy)
+
+        if (ShouldHideFirstEnemy(playerToPreview, lastEnemy))
         {
-            Logger.Debug("Start: *Hiding first enemy board", _shouldLog);
+            Logger.Debug("Hiding first enemy board", _shouldLog);
             CombatUiManager.ShowBoard(_firstEnemy, false);
         }
 
+        if (playerToPreview.IsAlly)
+        {
+            HandleAllyPreview(playerToPreview, currentPlayer);
+        }
+        else
+        {
+            HandleEnemyPreview(playerToPreview, currentPlayer, lastEnemy);
+        }
+    }
+
+    private bool ShouldHideFirstEnemy(Player playerToPreview, Player lastEnemy)
+    {
+        return _previouslyShownPlayer == null && lastEnemy == null && !playerToPreview.IsAlly &&
+               playerToPreview != _firstEnemy;
+    }
+
+    private void HandleAllyPreview(Player playerToPreview, Player currentPlayer)
+    {
+        Logger.Debug($"Hiding current player: {currentPlayer.PlayerName}'s board", _shouldLog);
+        CombatUiManager.ShowBoard(currentPlayer, false);
+        CombatUiManager.ShowHand(currentPlayer, false);
+        CombatUiManager.ShowHand(playerToPreview, true, true);
+    }
+
+    private void HandleEnemyPreview(Player playerToPreview, Player currentPlayer, Player lastEnemy)
+    {
+        CombatUiManager.ShowHand(currentPlayer, true, true);
+
+        if (_previouslyShownPlayer is { IsAlly: true })
+        {
+            CombatUiManager.ShowHand(_previouslyShownPlayer, false);
+        }
+
+        if (playerToPreview != lastEnemy && lastEnemy != null)
+        {
+            Logger.Debug($"Transitioning enemy boards from {lastEnemy.PlayerName} to {playerToPreview.PlayerName}",
+                _shouldLog);
+            CombatUiManager.ShowBoard(playerToPreview, true);
+            CombatUiManager.ShowBoard(lastEnemy, false);
+        }
+    }
+
+    private void UpdatePreviewState(Player playerToPreview, Player currentPlayer)
+    {
         currentPlayer.TurnIndicatorPreviewColor(true);
         playerToPreview.ShowPreviewIndicator(true);
 
         _previouslyShownPlayer = _previewedPlayer;
         _previewedPlayer = playerToPreview;
 
-        // Disable UI elements during preview
         _uiManager.SetNextButtonState(false);
         _uiManager.SetAttackButtonState(false);
-
-        switch (_previewedPlayer.IsAlly)
-        {
-            case true:
-                Logger.Debug($"Start: Hiding current player: {currentPlayer.PlayerName}'s board", _shouldLog);
-                CombatUiManager.ShowBoard(currentPlayer, false);
-                CombatUiManager.ShowHand(currentPlayer, false);
-                CombatUiManager.ShowHand(playerToPreview, true, true);
-                break;
-            case false:
-                CombatUiManager.ShowHand(currentPlayer, true, true);
-                if (_previouslyShownPlayer is { IsAlly: true })
-                {
-                    CombatUiManager.ShowHand(_previouslyShownPlayer, false);
-                }
-
-                if (playerToPreview != lastEnemy && lastEnemy != null)
-                {
-                    Logger.Debug($"Start: [2] Showing player to preview: {playerToPreview.PlayerName}'s board",
-                        _shouldLog);
-                    CombatUiManager.ShowBoard(playerToPreview, true);
-                    Logger.Debug($"Start: Hiding last enemy: {lastEnemy.PlayerName}'s board", _shouldLog);
-                    CombatUiManager.ShowBoard(lastEnemy, false);
-                }
-
-                break;
-        }
     }
 
     private void EndPreview(Player currentPlayer, Player playerToPreview)
@@ -197,6 +230,12 @@ public class PreviewMode : ICombatMode
         }
 
         Logger.Debug($"Ending Preview for {_previewedPlayer.PlayerName}", _shouldLog);
+        HandlePreviewEnd(currentPlayer, playerToPreview);
+        ResetPreviewState(currentPlayer, playerToPreview);
+    }
+
+    private void HandlePreviewEnd(Player currentPlayer, Player playerToPreview)
+    {
         Player lastEnemy = _uiManager.LastEnemy;
 
         _previewedPlayer.ShowPreviewIndicator(false);
@@ -204,7 +243,7 @@ public class PreviewMode : ICombatMode
 
         if (lastEnemy != null)
         {
-            Logger.Debug($"End: [1] Showing last enemy: {lastEnemy.PlayerName}'s board", _shouldLog);
+            Logger.Debug($"Showing last enemy: {lastEnemy.PlayerName}'s board", _shouldLog);
             CombatUiManager.ShowBoard(lastEnemy, true);
         }
 
@@ -213,7 +252,12 @@ public class PreviewMode : ICombatMode
             CombatUiManager.ShowHand(_previewedPlayer, false);
         }
 
-        // Re-enable UI elements
+        RestoreUIState(currentPlayer);
+        HandleBoardVisibility(currentPlayer, playerToPreview, lastEnemy);
+    }
+
+    private void RestoreUIState(Player currentPlayer)
+    {
         _uiManager.SetNextButtonState(true);
         if (!_combatManager.HasAttacked)
         {
@@ -222,41 +266,40 @@ public class PreviewMode : ICombatMode
 
         if (currentPlayer.IsAlly)
         {
-            if (currentPlayer.CurrentCardPlays >= currentPlayer.TotalCardPlays)
-            {
-                Logger.Debug($"Current Player Card Plays: {currentPlayer.CurrentCardPlays}", _shouldLog);
-                CombatUiManager.ShowHand(currentPlayer, true, true);
-            }
-            else
-            {
-                CombatUiManager.ShowHand(currentPlayer, true);
-            }
+            bool handDisabled = currentPlayer.CurrentCardPlays >= currentPlayer.TotalCardPlays;
+            CombatUiManager.ShowHand(currentPlayer, true, handDisabled);
         }
+    }
 
-        Logger.Debug($"End: Hiding previewed player: {_previewedPlayer.PlayerName}'s board", _shouldLog);
+    private void HandleBoardVisibility(Player currentPlayer, Player playerToPreview, Player lastEnemy)
+    {
+        Logger.Debug($"Hiding previewed player: {_previewedPlayer.PlayerName}'s board", _shouldLog);
         CombatUiManager.ShowBoard(_previewedPlayer, false);
 
         if (!_previewedPlayer.IsAlly && playerToPreview.IsAlly)
         {
-            Logger.Debug(
-                $"End: [2] Showing {(lastEnemy != null ? "last enemy" : "first enemy")}: {(lastEnemy != null ? lastEnemy.PlayerName : _firstEnemy.PlayerName)}'s board",
-                _shouldLog
-            );
-            CombatUiManager.ShowBoard(lastEnemy ?? _firstEnemy, true);
+            Player boardToShow = lastEnemy ?? _firstEnemy;
+            Logger.Debug($"Showing {boardToShow.PlayerName}'s board", _shouldLog);
+            CombatUiManager.ShowBoard(boardToShow, true);
         }
         else if (_previewedPlayer.IsAlly && !playerToPreview.IsAlly)
         {
-            Logger.Debug($"End: Hiding first enemy: {_firstEnemy.PlayerName}'s board", _shouldLog);
+            Logger.Debug($"Hiding first enemy: {_firstEnemy.PlayerName}'s board", _shouldLog);
             CombatUiManager.ShowBoard(_firstEnemy, false);
         }
+    }
 
+    private void ResetPreviewState(Player currentPlayer, Player playerToPreview)
+    {
         currentPlayer.TurnIndicatorPreviewColor(false);
         _previewedPlayer = null;
         _previouslyShownPlayer = null;
 
         if (currentPlayer == playerToPreview)
         {
+            Logger.Debug("Preview ended on current player", _shouldLog);
             Exit();
+            PreviewEnded?.Invoke();
         }
     }
 }

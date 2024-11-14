@@ -44,7 +44,7 @@ public partial class CombatManager : Node2D
             _combatTurnManager.CurrentPlayer.IsAlly &&
             _combatTurnManager.CurrentPlayer.IsHandEnabled)
         {
-            Logger.Debug("Next turn input received from enabled ally", _shouldLog);
+            Logger.Debug("CombatManager: Next turn input received from enabled ally", _shouldLog);
             NextTurn();
         }
     }
@@ -63,19 +63,19 @@ public partial class CombatManager : Node2D
 
         if (Input.IsActionPressed("previous_preview"))
         {
-            Logger.Debug("Entering preview mode (backward)", _shouldLog);
+            Logger.Debug("CombatManager: Entering preview mode (backward)", _shouldLog);
             _modeManager.EnterMode(CombatModeManager.CombatModeType.Preview, false);
         }
         else if (Input.IsActionPressed("next_preview"))
         {
-            Logger.Debug("Entering preview mode (forward)", _shouldLog);
+            Logger.Debug("CombatManager: Entering preview mode (forward)", _shouldLog);
             _modeManager.EnterMode(CombatModeManager.CombatModeType.Preview);
         }
     }
 
     private void InitializeNodes()
     {
-        Logger.Debug("Initializing combat manager nodes", _shouldLog);
+        Logger.Debug("CombatManager: Initializing combat manager nodes", _shouldLog);
         _turnOrderDisplay = GetNode<TurnOrderDisplay>("../TurnOrderDisplay");
         _endTurnButton = GetNode<Button>("../EndTurn");
         _rollIndicator = GetNode<Node2D>("../RollIndicator");
@@ -88,11 +88,11 @@ public partial class CombatManager : Node2D
 
     private void InitializeComponents()
     {
-        Logger.Debug("Initializing combat components", _shouldLog);
+        Logger.Debug("CombatManager: Initializing combat components", _shouldLog);
         _combatTurnManager.InitializePlayers(this, _turnOrderDisplay);
         SetInitialAlliesAndEnemies();
 
-        Logger.Debug("Initializing UI for first turn", _shouldLog);
+        Logger.Debug("CombatManager: Initializing UI for first turn", _shouldLog);
         _combatUiManager.InitPlayerUi(
             _combatTurnManager.CurrentPlayer,
             FirstAlly,
@@ -103,29 +103,31 @@ public partial class CombatManager : Node2D
 
         if (!_combatTurnManager.CurrentPlayer.IsAlly)
         {
-            Logger.Debug("Initializing enemy AI", _shouldLog);
+            Logger.Debug("CombatManager: Initializing enemy AI", _shouldLog);
             InitEnemyAi();
         }
         else
         {
-            Logger.Debug("Enabling player buttons for ally turn", _shouldLog);
+            Logger.Debug("CombatManager: Enabling player buttons for ally turn", _shouldLog);
             SetAllPlayerButtonsEnabled(true);
+            _combatUiManager.SetEndTurnButtonState(true);
+            _combatUiManager.SetAttackButtonState(true);
         }
     }
 
     private void SetupEventHandlers()
     {
-        Logger.Debug("Setting up event handlers", _shouldLog);
+        Logger.Debug("CombatManager: Setting up event handlers", _shouldLog);
         _defenseDraw.ChildEnteredTree += OnDefenseDrawChildEnteredTree;
         _attackButton.Toggled += AttackButtonOnPressed;
     }
 
     private void SetInitialAlliesAndEnemies()
     {
-        Logger.Debug("Setting up initial allies and enemies", _shouldLog);
+        Logger.Debug("CombatManager: Setting up initial allies and enemies", _shouldLog);
         _combatTurnManager.TurnOrder.ForEach(player =>
         {
-            Logger.Debug($"Setting up player: {player.PlayerName}", _shouldLog);
+            Logger.Debug($"CombatManager: Setting up player: {player.PlayerName}", _shouldLog);
             player.PlayerClicked += OnPlayerClicked;
             player.AllyTurnReady += OnAllyHandEnabled;
 
@@ -133,7 +135,7 @@ public partial class CombatManager : Node2D
             {
                 if (FirstAlly == null)
                 {
-                    Logger.Debug($"Set first ally: {player.PlayerName}", _shouldLog);
+                    Logger.Debug($"CombatManager: Set first ally: {player.PlayerName}", _shouldLog);
                     FirstAlly = player;
                 }
             }
@@ -141,7 +143,7 @@ public partial class CombatManager : Node2D
             {
                 if (FirstEnemy == null)
                 {
-                    Logger.Debug($"Set first enemy: {player.PlayerName}", _shouldLog);
+                    Logger.Debug($"CombatManager: Set first enemy: {player.PlayerName}", _shouldLog);
                     FirstEnemy = player;
                 }
             }
@@ -152,7 +154,7 @@ public partial class CombatManager : Node2D
 
     private void OnAllyHandEnabled()
     {
-        Logger.Debug("Ally hand enabled, enabling player buttons", _shouldLog);
+        Logger.Debug("CombatManager: Ally hand enabled, enabling player buttons", _shouldLog);
         SetAllPlayerButtonsEnabled(true);
     }
 
@@ -160,7 +162,7 @@ public partial class CombatManager : Node2D
     {
         _combatTurnManager.TurnOrder.ForEach(player =>
         {
-            Logger.Debug($"Setting {player.PlayerName}'s button enabled: {enabled}", _shouldLog);
+            Logger.Debug($"CombatManager: Setting {player.PlayerName}'s button enabled: {enabled}", _shouldLog);
             player.SetButtonEnabled(enabled);
         });
     }
@@ -169,14 +171,14 @@ public partial class CombatManager : Node2D
     {
         if (_modeManager.CurrentMode is not AttackMode && _modeManager.CurrentMode is not PreviewMode)
         {
-            Logger.Debug($"Player clicked: {player.PlayerName}, entering preview mode", _shouldLog);
+            Logger.Debug($"CombatManager: Player clicked: {player.PlayerName}, entering preview mode", _shouldLog);
             _modeManager.EnterMode(CombatModeManager.CombatModeType.Preview, false, player);
         }
     }
 
     private void OnDefenseDrawChildEnteredTree(Node node)
     {
-        Logger.Debug("Defense draw card entered tree, setting up discard handler", _shouldLog);
+        Logger.Debug("CombatManager: Defense draw card entered tree, setting up discard handler", _shouldLog);
         ((Card)node).CardLeftTree += DiscardDefenseCard;
     }
 
@@ -184,7 +186,8 @@ public partial class CombatManager : Node2D
     {
         if (_modeManager.CurrentMode is AttackMode currentMode)
         {
-            Logger.Debug($"Discarding defense card to {currentMode.TargetPlayer.PlayerName}'s board", _shouldLog);
+            Logger.Debug($"CombatManager: Discarding defense card to {currentMode.TargetPlayer.PlayerName}'s board",
+                _shouldLog);
             currentMode.TargetPlayer.PlayerBoard.AddCard(card, true);
         }
 
@@ -193,14 +196,14 @@ public partial class CombatManager : Node2D
 
     private void AttackButtonOnPressed(bool pressed)
     {
-        Logger.Debug($"Attack button {(pressed ? "pressed" : "released")}", _shouldLog);
+        Logger.Debug($"CombatManager: Attack button {(pressed ? "pressed" : "released")}", _shouldLog);
         _modeManager.EnterMode(
             pressed ? CombatModeManager.CombatModeType.Attack : CombatModeManager.CombatModeType.None);
     }
 
     public void ExecuteAttack(Player target)
     {
-        Logger.Debug($"Executing attack on {target.PlayerName}", _shouldLog);
+        Logger.Debug($"CombatManager: Executing attack on {target.PlayerName}", _shouldLog);
         _attackButton.Disabled = true;
         HasAttacked = true;
         RollForAttack();
@@ -211,10 +214,14 @@ public partial class CombatManager : Node2D
 
     private Card DrawDefenseCard(Player target)
     {
-        Logger.Debug($"{target.PlayerName} drawing defense card", _shouldLog);
+        Logger.Debug($"CombatManager: {target.PlayerName} drawing defense card", _shouldLog);
         return target.DrawCardForDefense(() =>
         {
-            _endTurnButton.Disabled = false;
+            if (_combatTurnManager.CurrentPlayer.IsAlly)
+            {
+                _combatUiManager.SetEndTurnButtonState(true);
+            }
+
             if (_combatTurnManager.CurrentPlayer.CurrentCardPlays < _combatTurnManager.CurrentPlayer.TotalCardPlays)
             {
                 CombatUiManager.ShowHand(_combatTurnManager.CurrentPlayer, true);
@@ -225,16 +232,16 @@ public partial class CombatManager : Node2D
     private void ResolveAttack(Player target, Card defenseCard)
     {
         int defenseValue = CalculateDefenseValue(defenseCard);
-        Logger.Debug($"Attack roll: {_rollValue} vs Defense: {defenseValue}", _shouldLog);
+        Logger.Debug($"CombatManager: Attack roll: {_rollValue} vs Defense: {defenseValue}", _shouldLog);
 
         if (defenseValue > _rollValue)
         {
-            Logger.Debug($"{target.PlayerName} blocked the attack", _shouldLog);
+            Logger.Debug($"CombatManager: {target.PlayerName} blocked the attack", _shouldLog);
             target.PlayBlockAnimation();
         }
         else
         {
-            Logger.Debug($"{target.PlayerName} was hit by the attack", _shouldLog);
+            Logger.Debug($"CombatManager: {target.PlayerName} was hit by the attack", _shouldLog);
             target.PlayHitAnimation();
         }
     }
@@ -243,15 +250,15 @@ public partial class CombatManager : Node2D
     {
         if (_combatTurnManager.CurrentPlayer.IsAlly)
         {
-            return card.NumericValue;
+            return card.NumericValue > 11 ? 10 : card.NumericValue;
         }
 
-        return card.NumericValue > 11 ? 10 : card.NumericValue;
+        return card.NumericValue;
     }
 
     private void ExitCurrentMode()
     {
-        Logger.Debug("Exiting current combat mode", _shouldLog);
+        Logger.Debug("CombatManager: Exiting current combat mode", _shouldLog);
         _modeManager.ExitCurrentMode();
     }
 
@@ -261,7 +268,8 @@ public partial class CombatManager : Node2D
         int randomNumber = random.Next(1, 11);
         _rollValue = randomNumber + _combatTurnManager.CurrentPlayer.MasteryBonus;
 
-        Logger.Debug($"Attack roll: {randomNumber} + {_combatTurnManager.CurrentPlayer.MasteryBonus} = {_rollValue}",
+        Logger.Debug(
+            $"CombatManager: Attack roll: {randomNumber} + {_combatTurnManager.CurrentPlayer.MasteryBonus} = {_rollValue}",
             _shouldLog);
 
         _rollIndicator.GetNode<Label>("Label").Text = $"{_rollValue}";
@@ -271,7 +279,7 @@ public partial class CombatManager : Node2D
     public void NextTurn()
     {
         Player currentPlayer = _combatTurnManager.CurrentPlayer;
-        Logger.Debug($"Starting next turn from {currentPlayer.PlayerName}", _shouldLog);
+        Logger.Debug($"CombatManager: Starting next turn from {currentPlayer.PlayerName}", _shouldLog);
 
         SetAllPlayerButtonsEnabled(false);
         HandleTurnTransition(currentPlayer);
@@ -281,14 +289,19 @@ public partial class CombatManager : Node2D
     {
         CleanupCurrentPlayer(currentPlayer);
         Player nextPlayer = PrepareNextPlayer(currentPlayer);
-        TransitionToNextPlayer(currentPlayer, nextPlayer);
+        if (nextPlayer.IsAlly)
+        {
+            _combatUiManager.SetEndTurnButtonState(true);
+        }
+
+        TransitionToNextPlayer(nextPlayer);
     }
 
     private void CleanupCurrentPlayer(Player currentPlayer)
     {
         if (!currentPlayer.IsAlly)
         {
-            Logger.Debug($"Removing enemy turn handler from {currentPlayer.PlayerName}", _shouldLog);
+            Logger.Debug($"CombatManager: Removing enemy turn handler from {currentPlayer.PlayerName}", _shouldLog);
             currentPlayer.EnemyFinishedTurn -= OnEnemyFinishedTurn;
         }
     }
@@ -296,7 +309,7 @@ public partial class CombatManager : Node2D
     private Player PrepareNextPlayer(Player currentPlayer)
     {
         Player nextPlayer = _combatTurnManager.GetNextPlayer();
-        Logger.Debug($"Next player will be: {nextPlayer.PlayerName}", _shouldLog);
+        Logger.Debug($"CombatManager: Next player will be: {nextPlayer.PlayerName}", _shouldLog);
 
         _combatUiManager.HandleCurrentAllyHandExit(currentPlayer, nextPlayer);
 
@@ -311,19 +324,19 @@ public partial class CombatManager : Node2D
     private void HandleAllyTransition()
     {
         Player lastAlly = _combatTurnManager.GetLastAlly();
-        Logger.Debug($"Hiding last ally hand: {lastAlly.PlayerName}", _shouldLog);
+        Logger.Debug($"CombatManager: Hiding last ally hand: {lastAlly.PlayerName}", _shouldLog);
         CombatUiManager.HideLastAllyHand(lastAlly);
     }
 
-    private void TransitionToNextPlayer(Player currentPlayer, Player nextPlayer)
+    private void TransitionToNextPlayer(Player nextPlayer)
     {
         _combatUiManager.HideLastPlayerBoard(nextPlayer.IsAlly);
 
-        currentPlayer = _combatTurnManager.SwapTurnToNextPlayer(nextPlayer);
+        Player currentPlayer = _combatTurnManager.SwapTurnToNextPlayer(nextPlayer);
 
         if (!currentPlayer.IsAlly)
         {
-            Logger.Debug($"Setting up enemy turn handler for {currentPlayer.PlayerName}", _shouldLog);
+            Logger.Debug($"CombatManager: Setting up enemy turn handler for {currentPlayer.PlayerName}", _shouldLog);
             currentPlayer.EnemyFinishedTurn += OnEnemyFinishedTurn;
         }
 
@@ -334,14 +347,14 @@ public partial class CombatManager : Node2D
 
     private void InitEnemyAi()
     {
-        Logger.Debug("Initializing enemy AI turn", _shouldLog);
+        Logger.Debug("CombatManager: Initializing enemy AI turn", _shouldLog);
         GetTree().CreateTimer(1).Timeout += _combatTurnManager.CurrentPlayer.EnemyPlayHand;
         _combatTurnManager.CurrentPlayer.EnemyFinishedTurn += OnEnemyFinishedTurn;
     }
 
     private void OnEnemyFinishedTurn()
     {
-        Logger.Debug("Enemy finished turn, executing attack sequence", _shouldLog);
+        Logger.Debug("CombatManager: Enemy finished turn, executing attack sequence", _shouldLog);
         _modeManager.EnterMode(CombatModeManager.CombatModeType.Attack, false);
 
         if (_modeManager.CurrentMode is AttackMode currentMode)
@@ -353,13 +366,13 @@ public partial class CombatManager : Node2D
 
     private void ScheduleEnemyAttack(AttackMode currentMode)
     {
-        Logger.Debug("Scheduling enemy attack", _shouldLog);
+        Logger.Debug("CombatManager: Scheduling enemy attack", _shouldLog);
         GetTree().CreateTimer(1.75).Timeout += () => ExecuteAttack(currentMode.TargetPlayer);
     }
 
     private void ScheduleNextTurn()
     {
-        Logger.Debug("Scheduling turn transition", _shouldLog);
+        Logger.Debug("CombatManager: Scheduling turn transition", _shouldLog);
         GetTree().CreateTimer(4).Timeout += NextTurn;
     }
 }

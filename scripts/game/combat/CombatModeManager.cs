@@ -18,7 +18,7 @@ public class CombatModeManager
 
     public CombatModeManager(CombatManager combatManager, CombatUiManager uiManager, CombatTurnManager turnManager)
     {
-        Logger.Debug("Initializing combat modes", _shouldLog);
+        Logger.Debug("CombatModeManager: Initializing combat modes", _shouldLog);
         _modes = new Dictionary<CombatModeType, ICombatMode>
         {
             { CombatModeType.Preview, new PreviewMode(combatManager, uiManager, turnManager) },
@@ -33,20 +33,20 @@ public class CombatModeManager
     {
         if (_modes[CombatModeType.Preview] is PreviewMode previewMode)
         {
-            Logger.Debug("Setting up preview mode handler", _shouldLog);
+            Logger.Debug("CombatModeManager: Setting up preview mode handler", _shouldLog);
             previewMode.PreviewEnded += OnPreviewEnded;
         }
     }
 
     private void OnPreviewEnded()
     {
-        Logger.Debug("Preview ended, switching to None mode", _shouldLog);
+        Logger.Debug("CombatModeManager: Preview ended, switching to None mode", _shouldLog);
         EnterMode(CombatModeType.None);
     }
 
     public void EnterMode(CombatModeType modeType, bool isForward = true, Player playerToPreview = null)
     {
-        Logger.Debug($"Entering mode: {modeType}", _shouldLog);
+        Logger.Debug($"CombatModeManager: Entering mode: {modeType}", _shouldLog);
 
         if (ShouldExitCurrentMode(modeType, playerToPreview))
         {
@@ -55,7 +55,7 @@ public class CombatModeManager
 
         if (modeType == CombatModeType.None)
         {
-            Logger.Debug("Entering None mode, exiting current mode", _shouldLog);
+            Logger.Debug("CombatModeManager: Entering None mode, exiting current mode", _shouldLog);
             ExitCurrentMode();
             return;
         }
@@ -70,19 +70,19 @@ public class CombatModeManager
 
     private void InitializeNewMode(CombatModeType modeType, bool isForward, Player playerToPreview)
     {
-        Logger.Debug($"Initializing new mode: {modeType}", _shouldLog);
+        Logger.Debug($"CombatModeManager: Initializing new mode: {modeType}", _shouldLog);
         CurrentMode = _modes[modeType];
 
         if (CurrentMode is PreviewMode previewMode)
         {
             Logger.Debug(
-                $"Entering preview mode, forward: {isForward}, player: {playerToPreview?.PlayerName ?? "none"}",
+                $"CombatModeManager: Entering preview mode, forward: {isForward}, player: {playerToPreview?.PlayerName ?? "none"}",
                 _shouldLog);
             previewMode.Enter(isForward, playerToPreview);
         }
         else
         {
-            Logger.Debug($"Entering non-preview mode: {modeType}, forward: {isForward}", _shouldLog);
+            Logger.Debug($"CombatModeManager: Entering non-preview mode: {modeType}, forward: {isForward}", _shouldLog);
             CurrentMode.Enter(isForward);
         }
     }
@@ -91,11 +91,11 @@ public class CombatModeManager
     {
         if (CurrentMode == null)
         {
-            Logger.Debug("No current mode to exit", _shouldLog);
+            Logger.Debug("CombatModeManager: No current mode to exit", _shouldLog);
             return;
         }
 
-        Logger.Debug($"Exiting current mode: {CurrentMode.GetType().Name}", _shouldLog);
+        Logger.Debug($"CombatModeManager: Exiting current mode: {CurrentMode.GetType().Name}", _shouldLog);
         CurrentMode.Exit();
         CurrentMode = null;
     }

@@ -8,6 +8,7 @@ namespace NinthLife.scripts.game;
 
 public partial class Player : Node2D
 {
+    // Signals
     [Signal]
     public delegate void AllyHandEnabledEventHandler(bool enabled);
 
@@ -26,8 +27,19 @@ public partial class Player : Node2D
     [Signal]
     public delegate void PlayerMouseHoveredInEventHandler(Player player);
 
+    // Constants
     private const int HandSize = 4;
-    private const float AnimationSpeed = .25f;
+    private const float AnimationSpeed = 0.25f;
+    private const float DefenseDrawDelay = 1.75f;
+    private const float EnemyPlayDelay1 = 0.5f;
+    private const float EnemyPlayDelay2 = 1.5f;
+    private const float HandDisabledY = 555f;
+    private const float HandInY = 500f;
+    private const float HandOutY = 850f;
+    private const float BoardShowY = 650f;
+    private readonly bool _shouldLog = true;
+
+    // Node references
     private AnimationPlayer _animationPlayer;
     private Button _attackButton;
     private StringName _combatEntitiesAdded;
@@ -35,105 +47,152 @@ public partial class Player : Node2D
     private Node2D _defenseDraw;
     private Button _endTurnButton;
     private Hand _hand;
-    private int _initiativeBonus;
 
+    // State
+    private int _initiativeBonus;
     private int _maxHealth;
     private Button _playerButton;
+
+    // Public properties
     public int CurrentCardPlays { get; private set; }
     public int TotalCardPlays { get; private set; } = 2;
     public int MasteryBonus { get; private set; } = 3;
     public bool IsHandEnabled { get; private set; }
-    public Polygon2D PreviewIndicator { get; private set; }
-    public Polygon2D AttackModeIndicator { get; private set; }
-
-    public List<Card> Deck { get; } = new();
-
-    public BaseBoard PlayerBoard { get; set; }
-    public Polygon2D TurnIndicator { get; private set; }
-    public Vector2 BoardActivePosition { get; set; }
-    public Vector2 BoardHiddenPosition { get; set; }
     public bool IsAlly { get; set; }
     public int Initiative { get; private set; }
     public string PlayerName { get; set; }
 
-    // Called when the node enters the scene tree for the first time.
+    // Visual indicators
+    public Polygon2D PreviewIndicator { get; private set; }
+    public Polygon2D AttackModeIndicator { get; private set; }
+    public Polygon2D TurnIndicator { get; private set; }
+
+    // Board related
+    public BaseBoard PlayerBoard { get; set; }
+    public Vector2 BoardActivePosition { get; set; }
+    public Vector2 BoardHiddenPosition { get; set; }
+    public List<Card> Deck { get; } = new();
+
     public override void _Ready()
     {
+        Logger.Debug($"Player: Initializing player: {PlayerName}", _shouldLog);
+        InitializeComponents();
+        SetupEventHandlers();
+        ConfigurePlayerBoard();
+        InitializePlayerState();
+    }
+
+    private void InitializeComponents()
+    {
+        Logger.Debug("Player: Setting up player components", _shouldLog);
         _hand = GetNode<Hand>("Hand");
-        _hand.SetPlayerBoard(PlayerBoard);
-        _hand.CardPlayed += OnCardPlayed;
         _defenseDraw = GetNode<Node2D>("../../DefenseDraw");
         _attackButton = GetNode<Button>("../../Attack");
         _endTurnButton = GetNode<Button>("../../EndTurn");
         _playerButton = GetNode<Button>("Sprite2D/Button");
+
+        _hand.SetPlayerBoard(PlayerBoard);
+        SetIndicators();
+    }
+
+    private void SetupEventHandlers()
+    {
+        Logger.Debug("Player: Setting up event handlers", _shouldLog);
+        _hand.CardPlayed += OnCardPlayed;
         _playerButton.Pressed += OnPlayerButtonPressed;
         _playerButton.MouseEntered += OnPlayerButtonMouseEntered;
-
-        SetIndicators();
-
-        PlayerBoard.GetNode<Label>("Label").Text = $"{PlayerName}'s Board";
-
-        DrawCards(HandSize, .01);
         PlayerFinishedDrawing += EnablePlayerHand;
 
         SetupIdleAnimation();
     }
 
+    private void ConfigurePlayerBoard()
+    {
+        if (PlayerBoard != null)
+        {
+            Logger.Debug($"Player: Configuring board for {PlayerName}", _shouldLog);
+            PlayerBoard.GetNode<Label>("Label").Text = $"{PlayerName}'s Board";
+        }
+    }
+
+    private void InitializePlayerState()
+    {
+        Logger.Debug($"Player: Initializing state for {PlayerName}", _shouldLog);
+        DrawCards(HandSize, 0.01);
+    }
+
     private void OnPlayerButtonPressed()
     {
+        Logger.Debug($"Player: Player button pressed for {PlayerName}", _shouldLog);
         EmitSignal(SignalName.PlayerClicked, this);
     }
 
     private void OnPlayerButtonMouseEntered()
     {
+        Logger.Debug($"Player: Mouse entered player button for {PlayerName}", _shouldLog);
         EmitSignal(SignalName.PlayerMouseHoveredIn, this);
     }
 
     private void SetupIdleAnimation()
     {
+        Logger.Debug($"Player: Setting up idle animation for {PlayerName}", _shouldLog);
         _animationPlayer = GetNode<AnimationPlayer>("AnimationPlayer");
-
-        // Play the idle animation
         _animationPlayer.Play("idle");
-
-        // Handle AnimationFinished
         _animationPlayer.AnimationFinished += OnAnimationFinished;
     }
 
     private void OnAnimationFinished(StringName animationName)
     {
+        Logger.Debug($"Player: Animation finished for {PlayerName}: {animationName}", _shouldLog);
         _animationPlayer.Play("idle");
     }
 
     public void PlayHitAnimation()
     {
+        Logger.Debug($"Player: Playing hit animation for {PlayerName}", _shouldLog);
         _animationPlayer.Play("hit");
     }
 
     public void PlayBlockAnimation()
     {
+        Logger.Debug($"Player: Playing block animation for {PlayerName}", _shouldLog);
         _animationPlayer.Play("block");
     }
 
     public Card DrawCardForDefense(Action callback)
     {
+        Logger.Debug($"Player: {PlayerName} drawing card for defense", _shouldLog);
+        Card drawnCard = DrawAndSetupDefenseCard();
+        ScheduleDefenseCardExit(drawnCard, callback);
+        return drawnCard;
+    }
+
+    private Card DrawAndSetupDefenseCard()
+    {
         Card drawnCard = Deck[0];
         Deck.RemoveAt(0);
         _defenseDraw.AddChild(drawnCard);
         drawnCard.SetMode(Card.CardMode.Disabled, true);
-        GetTree().CreateTimer(1.75).Timeout += () =>
+        return drawnCard;
+    }
+
+    private void ScheduleDefenseCardExit(Card card, Action callback)
+    {
+        GetTree().CreateTimer(DefenseDrawDelay).Timeout += () =>
         {
-            drawnCard.ExitCard();
+            card.ExitCard();
             callback.Invoke();
         };
-        return drawnCard;
     }
 
     private void OnCardPlayed()
     {
         CurrentCardPlays++;
+        Logger.Debug($"Player: {PlayerName} played card {CurrentCardPlays}/{TotalCardPlays}", _shouldLog);
+
         if (CurrentCardPlays == TotalCardPlays && IsAlly)
         {
+            Logger.Debug($"Player: Max plays reached for {PlayerName}, disabling hand", _shouldLog);
             SlideHandDisabled(false);
         }
     }
@@ -142,25 +201,42 @@ public partial class Player : Node2D
     {
         if (_playerButton != null)
         {
+            Logger.Debug($"Player: Setting {PlayerName}'s button enabled: {enabled}", _shouldLog);
             _playerButton.Disabled = !enabled;
         }
     }
 
-
     public void StartTurn()
+    {
+        Logger.Debug($"Player: Starting turn for {PlayerName}", _shouldLog);
+        InitializeTurn();
+        DrawInitialCards();
+        ScheduleTurnStart();
+    }
+
+    private void InitializeTurn()
     {
         DisablePlayerHand();
         TurnIndicator.Visible = true;
         CurrentCardPlays = 0;
-        int amountToDraw = HandSize - _hand.GetChildren().Count;
-        DrawCards(amountToDraw, .5);
+
         if (!IsAlly)
         {
             _attackButton.Disabled = true;
             _endTurnButton.Disabled = true;
         }
+    }
 
-        GetTree().CreateTimer(amountToDraw * .6).Timeout += () =>
+    private void DrawInitialCards()
+    {
+        int amountToDraw = HandSize - _hand.GetChildren().Count;
+        DrawCards(amountToDraw, 0.5);
+    }
+
+    private void ScheduleTurnStart()
+    {
+        int amountToDraw = HandSize - _hand.GetChildren().Count;
+        GetTree().CreateTimer(amountToDraw * 0.6).Timeout += () =>
         {
             if (!IsAlly)
             {
@@ -168,79 +244,131 @@ public partial class Player : Node2D
             }
             else
             {
-                _attackButton.Disabled = false;
-                _attackButton.ButtonPressed = false;
-                EnablePlayerHand();
-                EmitSignal(SignalName.AllyTurnReady);
+                EnableAllyTurn();
             }
         };
     }
 
+    private void EnableAllyTurn()
+    {
+        Logger.Debug($"Player: Enabling ally turn for {PlayerName}", _shouldLog);
+        _attackButton.Disabled = false;
+        _attackButton.ButtonPressed = false;
+        EnablePlayerHand();
+        EmitSignal(SignalName.AllyTurnReady);
+    }
+
     public void EndTurn()
     {
+        Logger.Debug($"Player: Ending turn for {PlayerName}", _shouldLog);
         TurnIndicator.Visible = false;
     }
 
     private void SetIndicators()
     {
-        TurnIndicator = GetNode<Polygon2D>("TurnIndicator");
-        TurnIndicator.Polygon = new Vector2[] { new(-10, 0), new(10, 0), new(0, -20) };
-        TurnIndicator.Rotate(Mathf.DegToRad(180));
-
-        PreviewIndicator = GetNode<Polygon2D>("PreviewIndicator");
-        PreviewIndicator.Polygon = new Vector2[] { new(-10, 0), new(10, 0), new(0, -20) };
-        PreviewIndicator.Rotate(Mathf.DegToRad(180));
-
-        AttackModeIndicator = GetNode<Polygon2D>("AttackModeIndicator");
-        AttackModeIndicator.Polygon = new Vector2[] { new(-10, 0), new(10, 0), new(0, -20) };
-        AttackModeIndicator.Rotate(Mathf.DegToRad(180));
+        Logger.Debug($"Player: Setting up indicators for {PlayerName}", _shouldLog);
+        SetupTurnIndicator();
+        SetupPreviewIndicator();
+        SetupAttackModeIndicator();
     }
 
+    private void SetupTurnIndicator()
+    {
+        TurnIndicator = GetNode<Polygon2D>("TurnIndicator");
+        ConfigureIndicator(TurnIndicator);
+    }
+
+    private void SetupPreviewIndicator()
+    {
+        PreviewIndicator = GetNode<Polygon2D>("PreviewIndicator");
+        ConfigureIndicator(PreviewIndicator);
+    }
+
+    private void SetupAttackModeIndicator()
+    {
+        AttackModeIndicator = GetNode<Polygon2D>("AttackModeIndicator");
+        ConfigureIndicator(AttackModeIndicator);
+    }
+
+    private void ConfigureIndicator(Polygon2D indicator)
+    {
+        indicator.Polygon = new Vector2[] { new(-10, 0), new(10, 0), new(0, -20) };
+        indicator.Rotate(Mathf.DegToRad(180));
+    }
 
     public void ShowPreviewIndicator(bool show)
     {
+        Logger.Debug($"Player: Setting preview indicator visibility for {PlayerName}: {show}", _shouldLog);
         PreviewIndicator.Visible = show;
     }
 
     public void TurnIndicatorPreviewColor(bool inPreviewMode)
     {
-        TurnIndicator.Color = !inPreviewMode ? new Color("00ff00") : new Color("006400");
+        Color color = !inPreviewMode ? new Color("00ff00") : new Color("006400");
+        Logger.Debug($"Player: Setting turn indicator color for {PlayerName}: {color}", _shouldLog);
+        TurnIndicator.Color = color;
     }
 
     public void SetAttackModeIndicator(bool inAttackMode)
     {
+        Logger.Debug($"Player: Setting attack mode indicator for {PlayerName}: {inAttackMode}", _shouldLog);
         AttackModeIndicator.Visible = inAttackMode;
     }
 
     public void SetSelectedEnemy(bool selected)
     {
+        Logger.Debug($"Player: Setting selected enemy state for {PlayerName}: {selected}", _shouldLog);
         AttackModeIndicator.Color = selected ? Colors.Orange : Colors.Yellow;
     }
 
     public void EnemyPlayHand()
     {
+        Logger.Debug($"Player: Enemy {PlayerName} playing hand", _shouldLog);
+        (Card card1, Card card2) cardsToPlay = SelectCardsToPlay();
+        PlayEnemyCards(cardsToPlay.card1, cardsToPlay.card2);
+    }
+
+    private (Card card1, Card card2) SelectCardsToPlay()
+    {
         List<Card> cardsInHand = _hand.GetChildren().OfType<Card>().ToList();
-
-        // Filter out face cards
         List<Card> nonFaceCards = cardsInHand.Where(card => !card.IsFaceCard).ToList();
+        (Card card1, Card card2) bestPair = FindBestCardPair(nonFaceCards);
 
-        // Group cards by suit
+        if (bestPair.card1 != null)
+        {
+            Logger.Debug(
+                $"Player: Enemy found optimal play: {bestPair.card1.GetCardName()} + {bestPair.card2.GetCardName()}",
+                _shouldLog);
+            return bestPair;
+        }
+
+        Logger.Debug("Player: Enemy using fallback play with first two cards", _shouldLog);
+        return (cardsInHand[0], cardsInHand[1]);
+    }
+
+    private (Card card1, Card card2) FindBestCardPair(List<Card> nonFaceCards)
+    {
         Dictionary<CardLibrary.SuitType, List<Card>> cardsBySuit = nonFaceCards
             .GroupBy(card => card.SuitType)
             .ToDictionary(g => g.Key, g => g.ToList());
 
-        // Define suit priority (highest to lowest)
         CardLibrary.SuitType[] suitPriority =
         {
             CardLibrary.SuitType.Core, CardLibrary.SuitType.Talent, CardLibrary.SuitType.Weapon,
             CardLibrary.SuitType.Armor
         };
 
+        return FindOptimalCardPair(cardsBySuit, suitPriority);
+    }
+
+    private (Card card1, Card card2) FindOptimalCardPair(
+        Dictionary<CardLibrary.SuitType, List<Card>> cardsBySuit,
+        CardLibrary.SuitType[] suitPriority)
+    {
         Card card1 = null;
         Card card2 = null;
         int bestSum = int.MaxValue;
 
-        // Check each suit in priority order
         foreach (CardLibrary.SuitType suitType in suitPriority)
         {
             if (!cardsBySuit.ContainsKey(suitType) || cardsBySuit[suitType].Count < 2)
@@ -249,49 +377,47 @@ public partial class Player : Node2D
             }
 
             List<Card> suitCards = cardsBySuit[suitType];
-
-            // Check all pairs of cards in this suit
-            for (int i = 0; i < suitCards.Count - 1; i++)
+            (bool found, Card card1, Card card2) pair = FindBestPairInSuit(suitCards, ref bestSum);
+            if (pair.found)
             {
-                for (int j = i + 1; j < suitCards.Count; j++)
-                {
-                    int sum = suitCards[i].NumericValue + suitCards[j].NumericValue;
-
-                    // If sum is >= 10 and less than our current best sum
-                    if (sum >= 10 && sum < bestSum)
-                    {
-                        bestSum = sum;
-                        card1 = suitCards[i];
-                        card2 = suitCards[j];
-                    }
-                }
-            }
-
-            // If we found a valid pair in this suit, stop looking
-            if (card1 != null && card2 != null)
-            {
+                card1 = pair.card1;
+                card2 = pair.card2;
                 break;
             }
         }
 
-        // If we found a valid pair, play them
-        if (card1 != null && card2 != null)
-        {
-            Logger.Info(
-                $"Playing {card1.NumericValue} and {card2.NumericValue} from {card1.SuitType} suit for total of {bestSum}");
-        }
-        else
-        {
-            card1 = cardsInHand[0];
-            card2 = cardsInHand[1];
+        return (card1, card2);
+    }
 
-            Logger.Info(
-                $"Playing random cards: {card1.NumericValue} from {card1.SuitType} and {card2.NumericValue} from {card2.SuitType}");
+    private (bool found, Card card1, Card card2) FindBestPairInSuit(List<Card> suitCards, ref int bestSum)
+    {
+        Card card1 = null;
+        Card card2 = null;
+
+        for (int i = 0; i < suitCards.Count - 1; i++)
+        {
+            for (int j = i + 1; j < suitCards.Count; j++)
+            {
+                int sum = suitCards[i].NumericValue + suitCards[j].NumericValue;
+                if (sum >= 10 && sum < bestSum)
+                {
+                    bestSum = sum;
+                    card1 = suitCards[i];
+                    card2 = suitCards[j];
+                }
+            }
         }
 
-        GetTree().CreateTimer(.5).Timeout +=
+        return (card1 != null, card1, card2);
+    }
+
+    private void PlayEnemyCards(Card card1, Card card2)
+    {
+        Logger.Debug($"Player: Enemy {PlayerName} scheduling card plays", _shouldLog);
+        GetTree().CreateTimer(EnemyPlayDelay1).Timeout +=
             () => card1.GetNode<Button>("Button").EmitSignal(BaseButton.SignalName.Pressed);
-        GetTree().CreateTimer(1.5).Timeout += () =>
+
+        GetTree().CreateTimer(EnemyPlayDelay2).Timeout += () =>
         {
             card2.GetNode<Button>("Button").EmitSignal(BaseButton.SignalName.Pressed);
             EmitSignal(SignalName.EnemyFinishedTurn);
@@ -300,34 +426,34 @@ public partial class Player : Node2D
 
     public void SlideHandIn()
     {
+        Logger.Debug($"Player: Sliding in hand for {PlayerName}", _shouldLog);
         Tween handTween = GetTree().CreateTween();
         handTween.TweenProperty(
             _hand,
             "global_position:y",
-            GlobalPosition.Y + 500,
+            GlobalPosition.Y + HandInY,
             AnimationSpeed
         );
-        handTween.Finished += delegate
-        {
-            _hand.PositionCards();
-        };
+        handTween.Finished += () => _hand.PositionCards();
     }
 
     public void SlideHandOut()
     {
+        Logger.Debug($"Player: Sliding out hand for {PlayerName}", _shouldLog);
         Tween handTween = GetTree().CreateTween();
         DisablePlayerHand();
         _hand.CollapseHand();
         handTween.TweenProperty(
             _hand,
             "global_position:y",
-            GlobalPosition.Y + 850,
+            GlobalPosition.Y + HandOutY,
             AnimationSpeed
         );
     }
 
     public void SlideBoardIn()
     {
+        Logger.Debug($"Player: Sliding in board for {PlayerName}", _shouldLog);
         Tween boardTween = GetTree().CreateTween();
         boardTween.TweenProperty(
             PlayerBoard,
@@ -339,6 +465,7 @@ public partial class Player : Node2D
 
     public void SlideBoardOut()
     {
+        Logger.Debug($"Player: Sliding out board for {PlayerName}", _shouldLog);
         Tween boardTween = GetTree().CreateTween();
         boardTween.TweenProperty(
             PlayerBoard,
@@ -350,56 +477,44 @@ public partial class Player : Node2D
 
     public void SlideHandDisabled(bool emitSignal = true)
     {
+        Logger.Debug($"Player: Sliding to disabled position for {PlayerName}", _shouldLog);
         Tween handTween = GetTree().CreateTween();
         handTween.TweenProperty(
             _hand,
             "global_position:y",
-            GlobalPosition.Y + 555,
+            GlobalPosition.Y + HandDisabledY,
             AnimationSpeed
         );
-        handTween.Finished += delegate
+        handTween.Finished += () =>
         {
             DisablePlayerHand(emitSignal);
             _hand.PositionCards();
         };
     }
 
-    private void ShowBoard()
-    {
-        Tween boardTween = GetTree().CreateTween();
-        boardTween.TweenProperty(
-            PlayerBoard,
-            "global_position:y",
-            GlobalPosition.Y + 650,
-            AnimationSpeed
-        );
-    }
-
     public void EnablePlayerHand()
     {
+        Logger.Debug($"Player: Enabling hand for {PlayerName}", _shouldLog);
         IsHandEnabled = true;
         _hand.EnableCards();
-        Logger.Debug($"Enabling {PlayerName}'s hand");
         EmitSignal(SignalName.AllyHandEnabled, true);
     }
 
     private void DisablePlayerHand(bool emitSignal = true)
     {
+        Logger.Debug($"Player: Disabling hand for {PlayerName} (emit signal: {emitSignal})", _shouldLog);
         IsHandEnabled = false;
         _hand.DisableCards();
         if (emitSignal)
         {
             EmitSignal(SignalName.AllyHandEnabled, false);
         }
-        else
-        {
-            Logger.Debug("Not emitting signal");
-        }
     }
 
-    private async void DrawCards(int x, double delay = AnimationSpeed)
+    private async void DrawCards(int count, double delay = AnimationSpeed)
     {
-        for (int i = 0; i < x; i++)
+        Logger.Debug($"Player: Drawing {count} cards for {PlayerName}", _shouldLog);
+        for (int i = 0; i < count; i++)
         {
             await ToSignal(GetTree().CreateTimer(delay), "timeout");
             DrawCard();
@@ -409,79 +524,62 @@ public partial class Player : Node2D
         EmitSignal(SignalName.PlayerFinishedDrawing);
     }
 
-    // Called every frame. 'delta' is the elapsed time since the previous frame.
-    public override void _Process(double delta) { }
-
-    // Add a card to the player's deck
-    private void AddCardToDeck(Card card)
-    {
-        Deck.Add(card);
-    }
-
-    public void CalculateInitiative()
-    {
-        // Sometimes I want to have better control over the characters turn order for testing
-        switch (PlayerName)
-        {
-            case "Skull":
-                // _initiativeBonus += 200;
-                break;
-            case "Hope":
-                // _initiativeBonus += 300;
-                break;
-            case "Drinker":
-                // _initiativeBonus += 300;
-                break;
-            case "Goblin":
-                // _initiativeBonus += 200;
-                break;
-            case "Goblin 2":
-                // _initiativeBonus += 300;
-                break;
-            case "Goblin 3":
-                // _initiativeBonus += 300;
-                break;
-        }
-
-        Random rand = new();
-        Initiative = rand.Next(100) + 1 + _initiativeBonus;
-    }
-
-    // Draw a card from the deck
     private void DrawCard()
     {
         if (Deck.Count <= 0)
         {
+            Logger.Debug($"Player: Cannot draw card - {PlayerName}'s deck is empty", _shouldLog);
             return;
         }
 
         Card drawnCard = Deck[0];
         Deck.RemoveAt(0);
+        Logger.Debug($"Player: {PlayerName} drew card: {drawnCard.GetCardName()}", _shouldLog);
         AddCardToHand(drawnCard);
     }
 
-    // Add a card to the player's hand
     private void AddCardToHand(Card card)
     {
+        Logger.Debug($"Player: Adding {card.GetCardName()} to {PlayerName}'s hand", _shouldLog);
         _hand.AddChild(card);
+    }
+
+    public void CalculateInitiative()
+    {
+        Random rand = new();
+        Initiative = rand.Next(100) + 1 + _initiativeBonus;
+        Logger.Debug(
+            $"Player: Calculated initiative for {PlayerName}: {Initiative} (base: {Initiative - _initiativeBonus}, bonus: {_initiativeBonus})",
+            _shouldLog);
     }
 
     public void ShuffleDeck(int repeat)
     {
+        Logger.Debug($"Player: Shuffling {PlayerName}'s deck {repeat} times", _shouldLog);
         for (int index = 0; index < repeat; index++)
         {
-            Random rng = new();
+            PerformShuffle();
+        }
+    }
 
-            // Start from the last card and swap it with a random card before it
-            for (int i = Deck.Count - 1; i > 0; i--)
-            {
-                int j = rng.Next(i + 1);
-                (Deck[i], Deck[j]) = (Deck[j], Deck[i]);
-            }
+    private void PerformShuffle()
+    {
+        Random rng = new();
+        for (int i = Deck.Count - 1; i > 0; i--)
+        {
+            int j = rng.Next(i + 1);
+            (Deck[i], Deck[j]) = (Deck[j], Deck[i]);
         }
     }
 
     public override void _ExitTree()
+    {
+        Logger.Debug($"Player: Cleaning up resources for {PlayerName}", _shouldLog);
+        CleanupDeck();
+        CleanupAnimations();
+    }
+
+    private void CleanupDeck()
     {
         foreach (Card card in Deck)
         {
@@ -490,7 +588,10 @@ public partial class Player : Node2D
         }
 
         Deck.Clear();
+    }
 
+    private void CleanupAnimations()
+    {
         if (_animationPlayer != null)
         {
             _animationPlayer.Stop();

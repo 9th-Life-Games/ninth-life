@@ -14,14 +14,16 @@ public class CombatUiManager
 
     public void SetButtons(Button endTurnButton, Button attackButton)
     {
-        Logger.Debug("Setting up UI buttons", ShouldLog);
+        Logger.Debug("CombatUiManager: Setting up UI buttons", ShouldLog);
         _endTurnButton = endTurnButton;
         _attackButton = attackButton;
+        _endTurnButton.Disabled = true;
+        _attackButton.Disabled = true;
     }
 
     public static void ShowBoard(Player player, bool show)
     {
-        Logger.Debug($"{(show ? "Showing" : "Hiding")} board for {player.PlayerName}", ShouldLog);
+        Logger.Debug($"CombatUiManager: {(show ? "Showing" : "Hiding")} board for {player.PlayerName}", ShouldLog);
         if (show)
         {
             player.SlideBoardIn();
@@ -36,7 +38,7 @@ public class CombatUiManager
     {
         if (!show)
         {
-            Logger.Debug($"Hiding hand for {player.PlayerName}", ShouldLog);
+            Logger.Debug($"CombatUiManager: Hiding hand for {player.PlayerName}", ShouldLog);
             player.SlideHandOut();
             return;
         }
@@ -45,29 +47,30 @@ public class CombatUiManager
         {
             if (!player.IsAlly)
             {
-                Logger.Debug($"Warning: Attempting to disable hand for non-ally {player.PlayerName}", ShouldLog);
+                Logger.Debug($"CombatUiManager: Warning: Attempting to disable hand for non-ally {player.PlayerName}",
+                    ShouldLog);
             }
 
-            Logger.Debug($"Showing disabled hand for {player.PlayerName}", ShouldLog);
+            Logger.Debug($"CombatUiManager: Showing disabled hand for {player.PlayerName}", ShouldLog);
             player.SlideHandDisabled();
         }
         else
         {
-            Logger.Debug($"Showing enabled hand for {player.PlayerName}", ShouldLog);
+            Logger.Debug($"CombatUiManager: Showing enabled hand for {player.PlayerName}", ShouldLog);
             player.SlideHandIn();
             player.EnablePlayerHand();
         }
     }
 
-    public void SetNextButtonState(bool enabled)
+    public void SetEndTurnButtonState(bool enabled)
     {
-        Logger.Debug($"Setting next turn button enabled: {enabled}", ShouldLog);
+        Logger.Debug($"CombatUiManager: Setting end turn button enabled: {enabled}", ShouldLog);
         _endTurnButton.Disabled = !enabled;
     }
 
     public void SetAttackButtonState(bool enabled)
     {
-        Logger.Debug($"Setting attack button enabled: {enabled}", ShouldLog);
+        Logger.Debug($"CombatUiManager: Setting attack button enabled: {enabled}", ShouldLog);
         _attackButton.Disabled = !enabled;
     }
 
@@ -75,12 +78,12 @@ public class CombatUiManager
     {
         if (player.IsAlly)
         {
-            Logger.Debug($"Tracking last ally: {player.PlayerName}", ShouldLog);
+            Logger.Debug($"CombatUiManager: Tracking last ally: {player.PlayerName}", ShouldLog);
             LastAlly = player;
         }
         else
         {
-            Logger.Debug($"Tracking last enemy: {player.PlayerName}", ShouldLog);
+            Logger.Debug($"CombatUiManager: Tracking last enemy: {player.PlayerName}", ShouldLog);
             LastEnemy = player;
         }
     }
@@ -90,7 +93,7 @@ public class CombatUiManager
         Player lastPlayer = nextPlayerIsAlly ? LastAlly : LastEnemy;
         if (lastPlayer != null)
         {
-            Logger.Debug($"Hiding last player board: {lastPlayer.PlayerName}", ShouldLog);
+            Logger.Debug($"CombatUiManager: Hiding last player board: {lastPlayer.PlayerName}", ShouldLog);
             ShowBoard(lastPlayer, false);
         }
     }
@@ -99,14 +102,14 @@ public class CombatUiManager
     {
         if (lastAlly != null)
         {
-            Logger.Debug($"Hiding last ally hand: {lastAlly.PlayerName}", ShouldLog);
+            Logger.Debug($"CombatUiManager: Hiding last ally hand: {lastAlly.PlayerName}", ShouldLog);
             ShowHand(lastAlly, false);
         }
     }
 
     public void HandleCurrentAllyHandExit(Player currentPlayer, Player nextPlayer)
     {
-        Logger.Debug($"Handling hand exit for {currentPlayer.PlayerName}", ShouldLog);
+        Logger.Debug($"CombatUiManager: Handling hand exit for {currentPlayer.PlayerName}", ShouldLog);
         TrackLastPlayer(currentPlayer);
 
         bool shouldShowDisabled = currentPlayer.IsAlly && !nextPlayer.IsAlly;
@@ -117,19 +120,20 @@ public class CombatUiManager
     {
         if (showDisabled)
         {
-            Logger.Debug($"Showing disabled hand for transitioning ally {player.PlayerName}", ShouldLog);
+            Logger.Debug($"CombatUiManager: Showing disabled hand for transitioning ally {player.PlayerName}",
+                ShouldLog);
             ShowHand(player, true, true);
         }
         else
         {
-            Logger.Debug($"Hiding hand for {player.PlayerName}", ShouldLog);
+            Logger.Debug($"CombatUiManager: Hiding hand for {player.PlayerName}", ShouldLog);
             ShowHand(player, false);
         }
     }
 
     public void InitPlayerUi(Player currentPlayer, Player firstAlly, Player firstEnemy)
     {
-        Logger.Debug("Initializing player UI", ShouldLog);
+        Logger.Debug("CombatUiManager: Initializing player UI", ShouldLog);
         TrackLastPlayer(currentPlayer);
 
         InitializeHands(currentPlayer, firstAlly);
@@ -139,20 +143,21 @@ public class CombatUiManager
     private void InitializeHands(Player currentPlayer, Player firstAlly)
     {
         Player handPlayer = currentPlayer.IsAlly ? currentPlayer : firstAlly;
-        Logger.Debug($"Setting up initial hand for {handPlayer.PlayerName}", ShouldLog);
+        Logger.Debug($"CombatUiManager: Setting up initial hand for {handPlayer.PlayerName}", ShouldLog);
         ShowHand(handPlayer, true, !currentPlayer.IsAlly);
     }
 
     private void InitializeBoards(Player firstAlly, Player firstEnemy)
     {
-        Logger.Debug($"Showing initial boards for {firstAlly.PlayerName} and {firstEnemy.PlayerName}", ShouldLog);
+        Logger.Debug($"CombatUiManager: Showing initial boards for {firstAlly.PlayerName} and {firstEnemy.PlayerName}",
+            ShouldLog);
         ShowBoard(firstAlly, true);
         ShowBoard(firstEnemy, true);
     }
 
     public void ShowPlayerUi(Player player)
     {
-        Logger.Debug($"Showing UI for player: {player.PlayerName}", ShouldLog);
+        Logger.Debug($"CombatUiManager: Showing UI for player: {player.PlayerName}", ShouldLog);
         HandleHandTransition(player);
         ShowBoard(player, true);
     }
@@ -166,11 +171,11 @@ public class CombatUiManager
 
         if (LastAlly != null)
         {
-            Logger.Debug($"Hiding previous ally hand: {LastAlly.PlayerName}", ShouldLog);
+            Logger.Debug($"CombatUiManager: Hiding previous ally hand: {LastAlly.PlayerName}", ShouldLog);
             ShowHand(LastAlly, false);
         }
 
-        Logger.Debug($"Showing new ally hand: {player.PlayerName}", ShouldLog);
+        Logger.Debug($"CombatUiManager: Showing new ally hand: {player.PlayerName}", ShouldLog);
         ShowHand(player, true);
     }
 
@@ -178,12 +183,12 @@ public class CombatUiManager
     {
         if (!enemy.IsAlly)
         {
-            Logger.Debug($"Setting last enemy to: {enemy.PlayerName}", ShouldLog);
+            Logger.Debug($"CombatUiManager: Setting last enemy to: {enemy.PlayerName}", ShouldLog);
             LastEnemy = enemy;
         }
         else
         {
-            Logger.Debug($"Attempted to set ally {enemy.PlayerName} as last enemy", ShouldLog);
+            Logger.Debug($"CombatUiManager: Attempted to set ally {enemy.PlayerName} as last enemy", ShouldLog);
         }
     }
 }

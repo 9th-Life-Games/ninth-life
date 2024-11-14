@@ -7,6 +7,7 @@ namespace NinthLife.scripts.menu;
 
 public partial class MainMenu : Control
 {
+    private static readonly bool ShouldLog = true;
     private readonly Vector2 _drinkerPos = new(210, 193);
     private readonly Vector2 _goblinPos = new(890, 193);
     private readonly Vector2 _goblinThreePos = new(750, 193);
@@ -29,305 +30,360 @@ public partial class MainMenu : Control
     private Player _skull;
     private SuitSelection _weaponSelection;
 
-    public override void _UnhandledInput(InputEvent @event)
-    {
-        if (@event is InputEventKey { Pressed: true, Keycode: Key.Escape })
-        {
-            if (_musicPlayer != null)
-            {
-                _musicPlayer.Stop();
-            }
-
-            GetTree().Quit();
-        }
-    }
-
     public override void _Ready()
     {
+        Logger.Debug("Initializing main menu", ShouldLog);
+        InitializeMenu();
+    }
+
+    private void InitializeMenu()
+    {
         InitNodes();
-
         _continueButton.Disabled = true;
-
         SetupSuitToggles();
-
         WatchSuitSelections();
-
-        _continueButton.Pressed += OnPlayGamePressed;
+        SetupEventHandlers();
+        StartBackgroundMusic();
     }
 
     private void InitNodes()
     {
+        Logger.Debug("Setting up menu nodes", ShouldLog);
+        InitializeSuitSelections();
+        InitializeWeaponButtons();
+        InitializeArmorButtons();
+        InitializeOtherControls();
+    }
+
+    private void InitializeSuitSelections()
+    {
         _weaponSelection = GetNode<SuitSelection>("WeaponSelection");
         _armorSelection = GetNode<SuitSelection>("ArmorSelection");
+    }
 
+    private void InitializeWeaponButtons()
+    {
         _longbladeButton = GetNode<TextureButton>("Longblade");
         _shortbladeButton = GetNode<TextureButton>("Shortblade");
         _maceButton = GetNode<TextureButton>("Mace");
+    }
 
+    private void InitializeArmorButtons()
+    {
         _lightArmorButton = GetNode<TextureButton>("LightArmor");
         _heavyArmorButton = GetNode<TextureButton>("HeavyArmor");
+    }
 
+    private void InitializeOtherControls()
+    {
         _continueButton = GetNode<Button>("ContinueButton");
-
         _musicPlayer = GetNode<AudioStreamPlayer2D>("MusicPlayer");
-        _musicPlayer.Play();
+    }
+
+    private void SetupEventHandlers()
+    {
+        Logger.Debug("Setting up event handlers", ShouldLog);
+        _continueButton.Pressed += OnPlayGamePressed;
+    }
+
+    private void StartBackgroundMusic()
+    {
+        Logger.Debug("Starting background music", ShouldLog);
+        _musicPlayer?.Play();
+    }
+
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (@event is InputEventKey { Pressed: true, Keycode: Key.Escape })
+        {
+            Logger.Debug("Escape key pressed, quitting game", ShouldLog);
+            CleanupAndQuit();
+        }
+    }
+
+    private void CleanupAndQuit()
+    {
+        StopBackgroundMusic();
+        GetTree().Quit();
+    }
+
+    private void StopBackgroundMusic()
+    {
+        if (_musicPlayer != null)
+        {
+            Logger.Debug("Stopping background music", ShouldLog);
+            _musicPlayer.Stop();
+        }
     }
 
     private void SetupSuitToggles()
+    {
+        Logger.Debug("Setting up suit toggles", ShouldLog);
+        SetupWeaponToggles();
+        SetupArmorToggles();
+    }
+
+    private void SetupWeaponToggles()
+    {
+        SetupLongbladeToggle();
+        SetupShortbladeToggle();
+        SetupMaceToggle();
+    }
+
+    private void SetupLongbladeToggle()
     {
         _longbladeButton.Toggled += pressed =>
         {
             if (!pressed && _weaponSelection.SelectedSuit == "longblade")
             {
+                Logger.Debug("Deselecting longblade", ShouldLog);
                 UpdateSelectedSuit("", _weaponSelection);
-            }
-
-            if (!pressed)
-            {
                 return;
             }
 
-            UpdateSelectedSuit("longblade", _weaponSelection);
-            _shortbladeButton.ButtonPressed = false;
-            _maceButton.ButtonPressed = false;
+            if (pressed)
+            {
+                Logger.Debug("Selecting longblade", ShouldLog);
+                UpdateSelectedSuit("longblade", _weaponSelection);
+                _shortbladeButton.ButtonPressed = false;
+                _maceButton.ButtonPressed = false;
+            }
         };
+    }
+
+    private void SetupShortbladeToggle()
+    {
         _shortbladeButton.Toggled += pressed =>
         {
             if (!pressed && _weaponSelection.SelectedSuit == "shortblade")
             {
+                Logger.Debug("Deselecting shortblade", ShouldLog);
                 UpdateSelectedSuit("", _weaponSelection);
-            }
-
-            if (!pressed)
-            {
                 return;
             }
 
-            UpdateSelectedSuit("shortblade", _weaponSelection);
-            _longbladeButton.ButtonPressed = false;
-            _maceButton.ButtonPressed = false;
+            if (pressed)
+            {
+                Logger.Debug("Selecting shortblade", ShouldLog);
+                UpdateSelectedSuit("shortblade", _weaponSelection);
+                _longbladeButton.ButtonPressed = false;
+                _maceButton.ButtonPressed = false;
+            }
         };
+    }
+
+    private void SetupMaceToggle()
+    {
         _maceButton.Toggled += pressed =>
         {
             if (!pressed && _weaponSelection.SelectedSuit == "mace")
             {
+                Logger.Debug("Deselecting mace", ShouldLog);
                 UpdateSelectedSuit("", _weaponSelection);
-            }
-
-            if (!pressed)
-            {
                 return;
             }
 
-            UpdateSelectedSuit("mace", _weaponSelection);
-            _shortbladeButton.ButtonPressed = false;
-            _longbladeButton.ButtonPressed = false;
+            if (pressed)
+            {
+                Logger.Debug("Selecting mace", ShouldLog);
+                UpdateSelectedSuit("mace", _weaponSelection);
+                _shortbladeButton.ButtonPressed = false;
+                _longbladeButton.ButtonPressed = false;
+            }
         };
+    }
 
+    private void SetupArmorToggles()
+    {
+        SetupLightArmorToggle();
+        SetupHeavyArmorToggle();
+    }
+
+    private void SetupLightArmorToggle()
+    {
         _lightArmorButton.Toggled += pressed =>
         {
             if (!pressed && _armorSelection.SelectedSuit == "lightarmor")
             {
+                Logger.Debug("Deselecting light armor", ShouldLog);
                 UpdateSelectedSuit("", _armorSelection);
-            }
-
-            if (!pressed)
-            {
                 return;
             }
 
-            UpdateSelectedSuit("lightarmor", _armorSelection);
-            _heavyArmorButton.ButtonPressed = false;
+            if (pressed)
+            {
+                Logger.Debug("Selecting light armor", ShouldLog);
+                UpdateSelectedSuit("lightarmor", _armorSelection);
+                _heavyArmorButton.ButtonPressed = false;
+            }
         };
+    }
+
+    private void SetupHeavyArmorToggle()
+    {
         _heavyArmorButton.Toggled += pressed =>
         {
             if (!pressed && _armorSelection.SelectedSuit == "heavyarmor")
             {
+                Logger.Debug("Deselecting heavy armor", ShouldLog);
                 UpdateSelectedSuit("", _armorSelection);
-            }
-
-            if (!pressed)
-            {
                 return;
             }
 
-            UpdateSelectedSuit("heavyarmor", _armorSelection);
-            _lightArmorButton.ButtonPressed = false;
+            if (pressed)
+            {
+                Logger.Debug("Selecting heavy armor", ShouldLog);
+                UpdateSelectedSuit("heavyarmor", _armorSelection);
+                _lightArmorButton.ButtonPressed = false;
+            }
         };
     }
 
     private void WatchSuitSelections()
     {
-        _weaponSelection.SuitSelected += _ =>
-        {
-            _continueButton.Disabled =
-                string.IsNullOrEmpty(_armorSelection.SelectedSuit)
-                || string.IsNullOrEmpty(_weaponSelection.SelectedSuit);
-        };
-        _armorSelection.SuitSelected += _ =>
-        {
-            _continueButton.Disabled =
-                string.IsNullOrEmpty(_armorSelection.SelectedSuit)
-                || string.IsNullOrEmpty(_weaponSelection.SelectedSuit);
-        };
+        Logger.Debug("Setting up suit selection watchers", ShouldLog);
+        _weaponSelection.SuitSelected += _ => UpdateContinueButtonState();
+        _armorSelection.SuitSelected += _ => UpdateContinueButtonState();
+    }
+
+    private void UpdateContinueButtonState()
+    {
+        bool shouldBeDisabled = string.IsNullOrEmpty(_armorSelection.SelectedSuit) ||
+                                string.IsNullOrEmpty(_weaponSelection.SelectedSuit);
+        Logger.Debug($"Updating continue button state: {(shouldBeDisabled ? "disabled" : "enabled")}", ShouldLog);
+        _continueButton.Disabled = shouldBeDisabled;
     }
 
     private static void UpdateSelectedSuit(string suitName, SuitSelection suitSelection)
     {
+        Logger.Debug($"Updating selected suit to: {(string.IsNullOrEmpty(suitName) ? "none" : suitName)}", ShouldLog);
         suitSelection.SetSelectedSuit(suitName);
     }
 
     private void OnPlayGamePressed()
     {
-        _skull = GameUtils.InstantiateCombatEntity(
-            "Skull",
-            ResourceManager.Load<Texture>("res://assets/Character Sprites/Skull/skull_sprite.png"),
-            _skullPos,
+        Logger.Debug("Starting game setup", ShouldLog);
+        CreateCharacters();
+        SetupPlayerDecks();
+        AddCharactersToGame();
+        StartGame();
+    }
+
+    private void CreateCharacters()
+    {
+        Logger.Debug("Creating characters", ShouldLog);
+        CreateAllies();
+        CreateEnemies();
+    }
+
+    private void CreateAllies()
+    {
+        _skull = InstantiateAlly("Skull", "res://assets/Character Sprites/Skull/skull_sprite.png", _skullPos);
+        _hope = InstantiateAlly("Hope", "res://assets/Character Sprites/Hope/hope_sprite.png", _hopePos);
+        _drinker = InstantiateAlly("Drinker", "res://assets/Character Sprites/Drinker/drinker_sprite.png", _drinkerPos);
+    }
+
+    private void CreateEnemies()
+    {
+        _goblin = InstantiateEnemy("Goblin", "res://assets/Character Sprites/enemy/goblin/goblin_sprite_rs.png",
+            _goblinPos);
+        _goblinTwo = InstantiateEnemy("Goblin 2", "res://assets/Character Sprites/enemy/goblin/goblin_sprite_rs_2.png",
+            _goblinTwoPos);
+        _goblinThree = InstantiateEnemy("Goblin 3",
+            "res://assets/Character Sprites/enemy/goblin/goblin_sprite_rs_3.png", _goblinThreePos);
+    }
+
+    private Player InstantiateAlly(string name, string texturePath, Vector2 position)
+    {
+        Logger.Debug($"Creating ally: {name}", ShouldLog);
+        return GameUtils.InstantiateCombatEntity(
+            name,
+            ResourceManager.Load<Texture>(texturePath),
+            position,
             true
         );
+    }
 
-        _hope = GameUtils.InstantiateCombatEntity(
-            "Hope",
-            ResourceManager.Load<Texture>("res://assets/Character Sprites/Hope/hope_sprite.png"),
-            _hopePos,
-            true
+    private Player InstantiateEnemy(string name, string texturePath, Vector2 position)
+    {
+        Logger.Debug($"Creating enemy: {name}", ShouldLog);
+        return GameUtils.InstantiateCombatEntity(
+            name,
+            ResourceManager.Load<Texture>(texturePath),
+            position
         );
+    }
 
-        _drinker = GameUtils.InstantiateCombatEntity(
-            "Drinker",
-            ResourceManager.Load<Texture>("res://assets/Character Sprites/Drinker/drinker_sprite.png"),
-            _drinkerPos,
-            true
-        );
+    private void SetupPlayerDecks()
+    {
+        Logger.Debug("Setting up player decks", ShouldLog);
+        SetupSkullDeck();
+        SetupOtherPlayerDecks();
+    }
 
-        _goblin = GameUtils.InstantiateCombatEntity(
-            "Goblin",
-            ResourceManager.Load<Texture>(
-                "res://assets/Character Sprites/enemy/goblin/goblin_sprite_rs.png"
-            ),
-            _goblinPos
-        );
-
-        _goblinTwo = GameUtils.InstantiateCombatEntity(
-            "Goblin 2",
-            ResourceManager.Load<Texture>(
-                "res://assets/Character Sprites/enemy/goblin/goblin_sprite_rs_2.png"
-            ),
-            _goblinTwoPos
-        );
-
-        _goblinThree = GameUtils.InstantiateCombatEntity(
-            "Goblin 3",
-            ResourceManager.Load<Texture>(
-                "res://assets/Character Sprites/enemy/goblin/goblin_sprite_rs_3.png"
-            ),
-            _goblinThreePos
-        );
-
-        object[] suitsList = { "suns", "cures", _weaponSelection.SelectedSuit, _armorSelection.SelectedSuit };
-        foreach (object suite in suitsList)
+    private void SetupSkullDeck()
+    {
+        Logger.Debug("Setting up Skull's deck", ShouldLog);
+        string[] suitsList = { "suns", "cures", _weaponSelection.SelectedSuit, _armorSelection.SelectedSuit };
+        foreach (string suit in suitsList)
         {
-            switch (suite)
-            {
-                case "heavyarmor":
-                    AddCardsToPlayerDeck(_skull, CardLibrary.Suits["heavyarmor"].Cards);
-                    break;
-                case "lightarmor":
-                    AddCardsToPlayerDeck(_skull, CardLibrary.Suits["lightarmor"].Cards);
-                    break;
-                case "longblade":
-                    AddCardsToPlayerDeck(_skull, CardLibrary.Suits["longblade"].Cards);
-                    break;
-                case "shortblade":
-                    AddCardsToPlayerDeck(_skull, CardLibrary.Suits["shortblade"].Cards);
-                    break;
-                case "mace":
-                    AddCardsToPlayerDeck(_skull, CardLibrary.Suits["mace"].Cards);
-                    break;
-                case "suns":
-                    AddCardsToPlayerDeck(_skull, CardLibrary.Suits["suns"].Cards);
-                    break;
-                case "cures":
-                    AddCardsToPlayerDeck(_skull, CardLibrary.Suits["cures"].Cards);
-                    break;
-                case "shadows":
-                    AddCardsToPlayerDeck(_skull, CardLibrary.Suits["shadows"].Cards);
-                    break;
-                case "venom":
-                    AddCardsToPlayerDeck(_skull, CardLibrary.Suits["venom"].Cards);
-                    break;
-                case "oracles":
-                    AddCardsToPlayerDeck(_skull, CardLibrary.Suits["oracles"].Cards);
-                    break;
-                case "paths":
-                    AddCardsToPlayerDeck(_skull, CardLibrary.Suits["paths"].Cards);
-                    break;
-                case "lions":
-                    AddCardsToPlayerDeck(_skull, CardLibrary.Suits["lions"].Cards);
-                    break;
-                case "standards":
-                    AddCardsToPlayerDeck(_skull, CardLibrary.Suits["standards"].Cards);
-                    break;
-                case "wicks":
-                    AddCardsToPlayerDeck(_skull, CardLibrary.Suits["wicks"].Cards);
-                    break;
-                case "wax":
-                    AddCardsToPlayerDeck(_skull, CardLibrary.Suits["wax"].Cards);
-                    break;
-            }
+            AddSuitToPlayer(_skull, suit);
         }
 
-        _skull.ShuffleDeck(4);
-        _skull.CalculateInitiative();
+        FinalizePlayerDeck(_skull);
+    }
 
-        AddCardsToPlayerDeck(_hope, CardLibrary.Suits["wax"].Cards);
-        AddCardsToPlayerDeck(_hope, CardLibrary.Suits["wicks"].Cards);
-        AddCardsToPlayerDeck(_hope, CardLibrary.Suits["longblade"].Cards);
-        AddCardsToPlayerDeck(_hope, CardLibrary.Suits["lightarmor"].Cards);
+    private void AddSuitToPlayer(Player player, string suit)
+    {
+        if (CardLibrary.Suits.TryGetValue(suit, out CardLibrary.CardData suitData))
+        {
+            Logger.Debug($"Adding {suit} cards to {player.PlayerName}'s deck", ShouldLog);
+            AddCardsToPlayerDeck(player, suitData.Cards);
+        }
+    }
 
-        _hope.ShuffleDeck(4);
-        _hope.CalculateInitiative();
+    private void SetupOtherPlayerDecks()
+    {
+        SetupHopeDeck();
+        SetupDrinkerDeck();
+        SetupGoblinDecks();
+    }
 
-        AddCardsToPlayerDeck(_drinker, CardLibrary.Suits["oracles"].Cards);
-        AddCardsToPlayerDeck(_drinker, CardLibrary.Suits["paths"].Cards);
-        AddCardsToPlayerDeck(_drinker, CardLibrary.Suits["shortblade"].Cards);
-        AddCardsToPlayerDeck(_drinker, CardLibrary.Suits["lightarmor"].Cards);
+    private void SetupHopeDeck()
+    {
+        Logger.Debug("Setting up Hope's deck", ShouldLog);
+        AddPresetDeckToPlayer(_hope, new[] { "wax", "wicks", "longblade", "lightarmor" });
+    }
 
-        _drinker.ShuffleDeck(4);
-        _drinker.CalculateInitiative();
+    private void SetupDrinkerDeck()
+    {
+        Logger.Debug("Setting up Drinker's deck", ShouldLog);
+        AddPresetDeckToPlayer(_drinker, new[] { "oracles", "paths", "shortblade", "lightarmor" });
+    }
 
-        AddCardsToPlayerDeck(_goblin, CardLibrary.Suits["lions"].Cards);
-        AddCardsToPlayerDeck(_goblin, CardLibrary.Suits["standards"].Cards);
-        AddCardsToPlayerDeck(_goblin, CardLibrary.Suits["longblade"].Cards);
-        AddCardsToPlayerDeck(_goblin, CardLibrary.Suits["lightarmor"].Cards);
+    private void SetupGoblinDecks()
+    {
+        Logger.Debug("Setting up Goblin decks", ShouldLog);
+        AddPresetDeckToPlayer(_goblin, new[] { "lions", "standards", "longblade", "lightarmor" });
+        AddPresetDeckToPlayer(_goblinTwo, new[] { "shadows", "venom", "shortblade", "lightarmor" });
+        AddPresetDeckToPlayer(_goblinThree, new[] { "suns", "cures", "mace", "heavyarmor" });
+    }
 
-        _goblin.ShuffleDeck(4);
-        _goblin.CalculateInitiative();
+    private void AddPresetDeckToPlayer(Player player, string[] suits)
+    {
+        foreach (string suit in suits)
+        {
+            AddSuitToPlayer(player, suit);
+        }
 
-        AddCardsToPlayerDeck(_goblinTwo, CardLibrary.Suits["shadows"].Cards);
-        AddCardsToPlayerDeck(_goblinTwo, CardLibrary.Suits["venom"].Cards);
-        AddCardsToPlayerDeck(_goblinTwo, CardLibrary.Suits["shortblade"].Cards);
-        AddCardsToPlayerDeck(_goblinTwo, CardLibrary.Suits["lightarmor"].Cards);
+        FinalizePlayerDeck(player);
+    }
 
-        _goblinTwo.ShuffleDeck(4);
-        _goblinTwo.CalculateInitiative();
-
-        AddCardsToPlayerDeck(_goblinThree, CardLibrary.Suits["suns"].Cards);
-        AddCardsToPlayerDeck(_goblinThree, CardLibrary.Suits["cures"].Cards);
-        AddCardsToPlayerDeck(_goblinThree, CardLibrary.Suits["mace"].Cards);
-        AddCardsToPlayerDeck(_goblinThree, CardLibrary.Suits["heavyarmor"].Cards);
-
-        _goblinThree.ShuffleDeck(4);
-        _goblinThree.CalculateInitiative();
-
-        GameUtils.CombatEntities.Add(_skull);
-        GameUtils.CombatEntities.Add(_hope);
-        GameUtils.CombatEntities.Add(_drinker);
-        GameUtils.CombatEntities.Add(_goblin);
-        GameUtils.CombatEntities.Add(_goblinTwo);
-        GameUtils.CombatEntities.Add(_goblinThree);
-
-        GetTree().ChangeSceneToFile("res://scenes/game.tscn");
+    private void FinalizePlayerDeck(Player player)
+    {
+        Logger.Debug($"Finalizing deck for {player.PlayerName}", ShouldLog);
+        player.ShuffleDeck(4);
+        player.CalculateInitiative();
     }
 
     private static void AddCardsToPlayerDeck(Player player, List<Card> cards)
@@ -336,5 +392,17 @@ public partial class MainMenu : Control
         {
             player.Deck.Add(card.DuplicateCard());
         }
+    }
+
+    private void AddCharactersToGame()
+    {
+        Logger.Debug("Adding characters to game", ShouldLog);
+        GameUtils.CombatEntities.AddRange(new[] { _skull, _hope, _drinker, _goblin, _goblinTwo, _goblinThree });
+    }
+
+    private void StartGame()
+    {
+        Logger.Debug("Starting game", ShouldLog);
+        GetTree().ChangeSceneToFile("res://scenes/game.tscn");
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
@@ -7,6 +8,11 @@ namespace NinthLife.scripts.game;
 
 public partial class BaseBoard : Node2D
 {
+    private const float AnimationSpeed = 0.1f;
+    private const float DiscardDelay = 0.5f;
+    private const float InPlayCardSpacing = 84f; // Total width from -47 to 47
+    private const float InPlayCardStartX = -47f;
+
     private readonly Dictionary<CardLibrary.SuitType, List<Card>> _cardPiles = new()
     {
         { CardLibrary.SuitType.Weapon, new List<Card>() },
@@ -15,9 +21,10 @@ public partial class BaseBoard : Node2D
         { CardLibrary.SuitType.Talent, new List<Card>() }
     };
 
+    private readonly bool _shouldLog = true;
+
     private Sprite2D _armorBox;
     private Sprite2D _coreBox;
-
     private Sprite2D _discardBox;
     private Sprite2D _inPlayBox;
     private Sprite2D _talentBox;
@@ -26,24 +33,35 @@ public partial class BaseBoard : Node2D
     public List<Card> WeaponCards => _cardPiles[CardLibrary.SuitType.Weapon];
     public List<Card> ArmorCards => _cardPiles[CardLibrary.SuitType.Armor];
     public List<Card> CoreCards => _cardPiles[CardLibrary.SuitType.Core];
-
     public List<Card> TalentCards => _cardPiles[CardLibrary.SuitType.Talent];
 
     public override void _Ready()
     {
+        InitializeBoxes();
+        SetupButtonHandlers();
+    }
+
+    private void InitializeBoxes()
+    {
+        Logger.Debug("BaseBoard: Initializing board boxes", _shouldLog);
         _discardBox = GetNode<Sprite2D>("DiscardBox");
         _armorBox = GetNode<Sprite2D>("ArmorBox");
         _coreBox = GetNode<Sprite2D>("CoreBox");
         _inPlayBox = GetNode<Sprite2D>("InPlayBox");
         _talentBox = GetNode<Sprite2D>("TalentBox");
         _weaponBox = GetNode<Sprite2D>("WeaponBox");
+    }
 
+    private void SetupButtonHandlers()
+    {
+        Logger.Debug("BaseBoard: Setting up button handlers", _shouldLog);
         _discardBox.GetNode<Button>("Button").Pressed += () => OnButtonPressed(_discardBox);
         _inPlayBox.GetNode<Button>("Button").Pressed += () => OnButtonPressed(_inPlayBox);
     }
 
     private void OnButtonPressed(Sprite2D cardBox)
     {
+        Logger.Debug($"BaseBoard: Displaying cards for {cardBox.Name}", _shouldLog);
         DisplayCards displayCards = ResourceManager.Load<PackedScene>("res://scenes/display_cards.tscn")
             .Instantiate<DisplayCards>();
         displayCards.SetCardsRoot(cardBox);
@@ -55,82 +73,77 @@ public partial class BaseBoard : Node2D
     {
         if (discard)
         {
-            Logger.Debug("AddCard to discard");
+            Logger.Debug($"BaseBoard: Adding card to discard: {card.GetCardName()}", _shouldLog);
             _discardBox.AddChild(card);
             return;
         }
 
-        Logger.Debug("AddCard");
-        if (card.NumericValue < 19)
+        if (card.NumericValue >= 19)
         {
-            _cardPiles[card.SuitType].Add(card);
-            List<Card> cardsToMove = _cardPiles[card.SuitType].ToList();
-            switch (card.SuitType)
-            {
-                case CardLibrary.SuitType.Weapon:
-                    ProgressBar weaponProgressBar = _weaponBox.GetNode<ProgressBar>("ProgressBar");
-                    weaponProgressBar.Value += card.NumericValue;
-                    if (weaponProgressBar.Value >= weaponProgressBar.MaxValue)
-                    {
-                        AddCardsToDiscardSequentially(cardsToMove, card.SuitType);
-                        weaponProgressBar.Value = 0;
-                    }
-
-                    break;
-                case CardLibrary.SuitType.Armor:
-                    ProgressBar armorProgressBar = _armorBox.GetNode<ProgressBar>("ProgressBar");
-                    armorProgressBar.Value += card.NumericValue;
-                    if (armorProgressBar.Value >= armorProgressBar.MaxValue)
-                    {
-                        AddCardsToDiscardSequentially(cardsToMove, card.SuitType);
-                        armorProgressBar.Value = 0;
-                    }
-
-                    break;
-                case CardLibrary.SuitType.Core:
-                    ProgressBar coreProgressBar = _coreBox.GetNode<ProgressBar>("ProgressBar");
-                    coreProgressBar.Value += card.NumericValue;
-                    if (coreProgressBar.Value >= coreProgressBar.MaxValue)
-                    {
-                        AddCardsToDiscardSequentially(cardsToMove, card.SuitType);
-                        coreProgressBar.Value = 0;
-                    }
-
-                    break;
-                case CardLibrary.SuitType.Talent:
-                    ProgressBar talentProgressBar = _talentBox.GetNode<ProgressBar>("ProgressBar");
-                    talentProgressBar.Value += card.NumericValue;
-                    if (talentProgressBar.Value >= talentProgressBar.MaxValue)
-                    {
-                        AddCardsToDiscardSequentially(cardsToMove, card.SuitType);
-                        // Reset progress bar
-                        talentProgressBar.Value = 0;
-                    }
-
-                    break;
-            }
+            HandleFaceCard(card);
+            return;
         }
-        else
+
+        HandleNormalCard(card);
+    }
+
+    private void HandleFaceCard(Card card)
+    {
+        Logger.Debug($"BaseBoard: Adding face card to in-play: {card.GetCardName()}", _shouldLog);
+        Card inPlayCard = card.DuplicateCard(Card.CardMode.Disabled, true);
+        _inPlayBox.AddChild(inPlayCard);
+        PositionInPlayCards();
+    }
+
+    private void HandleNormalCard(Card card)
+    {
+        Logger.Debug($"BaseBoard: Processing normal card: {card.GetCardName()}", _shouldLog);
+        _cardPiles[card.SuitType].Add(card);
+        List<Card> cardsToMove = _cardPiles[card.SuitType].ToList();
+        ProcessCardBySuitType(card, cardsToMove);
+    }
+
+    private void ProcessCardBySuitType(Card card, List<Card> cardsToMove)
+    {
+        ProgressBar progressBar = GetProgressBarForSuitType(card.SuitType);
+        progressBar.Value += card.NumericValue;
+
+        Logger.Debug($"BaseBoard: Progress for {card.SuitType}: {progressBar.Value}/{progressBar.MaxValue}",
+            _shouldLog);
+
+        if (progressBar.Value >= progressBar.MaxValue)
         {
-            Card inPlayCard = card.DuplicateCard(Card.CardMode.Disabled, true);
-            _inPlayBox.AddChild(inPlayCard);
-            PositionInPlayCards();
+            Logger.Debug($"BaseBoard: Progress bar full for {card.SuitType}, moving cards to discard", _shouldLog);
+            AddCardsToDiscardSequentially(cardsToMove, card.SuitType);
+            progressBar.Value = 0;
         }
+    }
+
+    private ProgressBar GetProgressBarForSuitType(CardLibrary.SuitType suitType)
+    {
+        return suitType switch
+        {
+            CardLibrary.SuitType.Weapon => _weaponBox.GetNode<ProgressBar>("ProgressBar"),
+            CardLibrary.SuitType.Armor => _armorBox.GetNode<ProgressBar>("ProgressBar"),
+            CardLibrary.SuitType.Core => _coreBox.GetNode<ProgressBar>("ProgressBar"),
+            CardLibrary.SuitType.Talent => _talentBox.GetNode<ProgressBar>("ProgressBar"),
+            _ => throw new ArgumentException($"Unexpected suit type: {suitType}")
+        };
     }
 
     private void AddCardsToDiscardSequentially(List<Card> cards, CardLibrary.SuitType suitType)
     {
+        Logger.Debug($"BaseBoard: Adding {cards.Count} cards to discard for {suitType}", _shouldLog);
         for (int i = 0; i < cards.Count; i++)
         {
             Card cardToDiscard = cards[i];
             _cardPiles[suitType].Remove(cardToDiscard);
 
-            // Capture the card in a local variable for the closure
             Card discardedCard = cardToDiscard.DuplicateCard(Card.CardMode.Disabled, true);
 
-            // Create sequential delays
-            GetTree().CreateTimer(0.5f * i).Timeout += () =>
+            GetTree().CreateTimer(DiscardDelay * i).Timeout += () =>
             {
+                Logger.Debug($"BaseBoard: Adding card to discard: {discardedCard.GetCardName()}", _shouldLog);
                 _discardBox.AddChild(discardedCard);
             };
         }
@@ -138,57 +151,73 @@ public partial class BaseBoard : Node2D
 
     public void RemoveCard(Card card, CardLibrary.SuitType suitType)
     {
+        Logger.Debug($"BaseBoard: Removing card from {suitType} pile: {card.GetCardName()}", _shouldLog);
         _cardPiles[suitType].Remove(card);
     }
 
     private int GetPileValue(CardLibrary.SuitType suitType)
     {
-        return _cardPiles[suitType].Sum(card => card.NumericValue);
+        int value = _cardPiles[suitType].Sum(card => card.NumericValue);
+        Logger.Debug($"BaseBoard: Total value for {suitType} pile: {value}", _shouldLog);
+        return value;
     }
 
     private void PositionInPlayCards()
     {
         List<Card> cards = _inPlayBox.GetChildren().OfType<Card>().ToList();
+        Logger.Debug($"BaseBoard: Positioning {cards.Count} in-play cards", _shouldLog);
 
         if (cards.Count == 0)
         {
             return;
         }
 
-        const float animationSpeed = 0.1f;
-
         switch (cards.Count)
         {
-            case 0:
-                return;
             case 1:
-                cards[0].Position = new Vector2(-47, 0);
-                return;
+                PositionSingleCard(cards[0]);
+                break;
             case 2:
-                cards[0].Position = new Vector2(-47, 0);
-                cards[1].Position = new Vector2(47, 0);
-                return;
+                PositionTwoCards(cards);
+                break;
+            default:
+                PositionMultipleCards(cards);
+                break;
         }
+    }
 
-        // For 3 or more cards, spread them evenly
-        const float totalWidth = 84; // -47 to 47
-        float spacing = totalWidth / (cards.Count - 1);
+    private void PositionSingleCard(Card card)
+    {
+        Logger.Debug("BaseBoard: Positioning single in-play card", _shouldLog);
+        card.Position = new Vector2(InPlayCardStartX, 0);
+    }
 
-        // Tween all cards except the last one
+    private void PositionTwoCards(List<Card> cards)
+    {
+        Logger.Debug("BaseBoard: Positioning two in-play cards", _shouldLog);
+        cards[0].Position = new Vector2(InPlayCardStartX, 0);
+        cards[1].Position = new Vector2(-InPlayCardStartX, 0);
+    }
+
+    private void PositionMultipleCards(List<Card> cards)
+    {
+        Logger.Debug($"BaseBoard: Positioning {cards.Count} in-play cards", _shouldLog);
+        float spacing = InPlayCardSpacing / (cards.Count - 1);
+
         for (int i = 0; i < cards.Count - 1; i++)
         {
-            float xPos = -47 + (spacing * i);
+            float xPos = InPlayCardStartX + (spacing * i);
             Tween tween = GetTree().CreateTween().SetParallel();
-            tween.TweenProperty(cards[i], "position", new Vector2(xPos, 0), animationSpeed);
+            tween.TweenProperty(cards[i], "position", new Vector2(xPos, 0), AnimationSpeed);
         }
 
-        // Position the last card directly without tweening
-        float lastXPos = -47 + (spacing * (cards.Count - 1));
+        float lastXPos = InPlayCardStartX + (spacing * (cards.Count - 1));
         cards[^1].Position = new Vector2(lastXPos, 0);
     }
 
     public override void _ExitTree()
     {
+        Logger.Debug("BaseBoard: Cleaning up board resources", _shouldLog);
         foreach (List<Card> pile in _cardPiles.Values)
         {
             foreach (Card card in pile)

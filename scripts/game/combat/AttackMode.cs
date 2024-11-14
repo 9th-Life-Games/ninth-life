@@ -25,40 +25,39 @@ public class AttackMode : ICombatMode
 
     public void Enter(bool isForward = true, Player playerToPreview = null)
     {
-        Logger.Debug("Entering Attack Mode", _shouldLog);
+        Logger.Debug("AttackMode: Entering Attack Mode", _shouldLog);
 
         if (!isForward)
         {
             TargetPlayer = SelectRandomAllyTarget();
-            Logger.Debug($"Initial Target Ally: {TargetPlayer.PlayerName}", _shouldLog);
+            Logger.Debug($"AttackMode: Initial Target Ally: {TargetPlayer.PlayerName}", _shouldLog);
             return;
         }
 
-        Logger.Debug("Setting up player attack mode", _shouldLog);
-        _uiManager.SetNextButtonState(false);
+        Logger.Debug("AttackMode: Setting up player attack mode", _shouldLog);
+        _uiManager.SetEndTurnButtonState(false);
         SetupEnemyTargetables();
 
         // Set initial target
         _targetEnemyIndex = 0;
         TargetPlayer = _turnManager.EnemyTurnOrder[0];
-        Logger.Debug($"Initial Target Enemy: {TargetPlayer.PlayerName}", _shouldLog);
+        Logger.Debug($"AttackMode: Initial Target Enemy: {TargetPlayer.PlayerName}", _shouldLog);
         TargetPlayer.SetSelectedEnemy(true);
 
-        Logger.Debug($"Showing initial enemy board for: {TargetPlayer.PlayerName}", _shouldLog);
+        Logger.Debug($"AttackMode: Showing initial enemy board for: {TargetPlayer.PlayerName}", _shouldLog);
         ShowEnemyBoard(TargetPlayer);
 
-        Logger.Debug("Disabling current player's hand", _shouldLog);
+        Logger.Debug("AttackMode: Disabling current player's hand", _shouldLog);
         _turnManager.CurrentPlayer.SlideHandDisabled();
     }
 
     public void Exit()
     {
-        Logger.Debug("Exiting Attack Mode", _shouldLog);
-        _uiManager.SetNextButtonState(true);
+        Logger.Debug("AttackMode: Exiting Attack Mode", _shouldLog);
 
         if (!_turnManager.CurrentPlayer.IsAlly)
         {
-            Logger.Debug("Skipping board management for enemy turn", _shouldLog);
+            Logger.Debug("AttackMode: Skipping board management for enemy turn", _shouldLog);
             TargetPlayer = null;
             return;
         }
@@ -66,16 +65,16 @@ public class AttackMode : ICombatMode
         CleanupEnemyTargetables();
 
         Player currentlyShownEnemy = _uiManager.LastEnemy ?? _firstEnemy;
-        Logger.Debug($"Hiding current enemy board: {currentlyShownEnemy.PlayerName}", _shouldLog);
+        Logger.Debug($"AttackMode: Hiding current enemy board: {currentlyShownEnemy.PlayerName}", _shouldLog);
         CombatUiManager.ShowBoard(currentlyShownEnemy, false);
 
         Player boardToShow = _uiManager.LastEnemy ?? _firstEnemy;
-        Logger.Debug($"Showing final enemy board: {boardToShow.PlayerName}", _shouldLog);
+        Logger.Debug($"AttackMode: Showing final enemy board: {boardToShow.PlayerName}", _shouldLog);
         CombatUiManager.ShowBoard(boardToShow, true);
 
         if (_turnManager.CurrentPlayer.CurrentCardPlays < _turnManager.CurrentPlayer.TotalCardPlays)
         {
-            Logger.Debug("Re-enabling player hand", _shouldLog);
+            Logger.Debug("AttackMode: Re-enabling player hand", _shouldLog);
             CombatUiManager.ShowHand(_turnManager.CurrentPlayer, true);
         }
 
@@ -99,7 +98,7 @@ public class AttackMode : ICombatMode
         }
         else if (inputEvent.IsActionPressed("next_preview"))
         {
-            Logger.Debug($"Is Ally: {_turnManager.CurrentPlayer.IsAlly}");
+            Logger.Debug($"AttackMode: Is Ally: {_turnManager.CurrentPlayer.IsAlly}");
             CycleTargetForward();
         }
     }
@@ -115,7 +114,7 @@ public class AttackMode : ICombatMode
     {
         _turnManager.EnemyTurnOrder.ForEach(player =>
         {
-            Logger.Debug($"Setting up attack indicators for: {player.PlayerName}", _shouldLog);
+            Logger.Debug($"AttackMode: Setting up attack indicators for: {player.PlayerName}", _shouldLog);
             player.SetAttackModeIndicator(true);
             player.PlayerClicked += OnEnemyClicked;
             player.PlayerMouseHoveredIn += OnEnemyMouseHoveredIn;
@@ -126,7 +125,7 @@ public class AttackMode : ICombatMode
     {
         _turnManager.EnemyTurnOrder.ForEach(player =>
         {
-            Logger.Debug($"Cleaning up attack indicators for: {player.PlayerName}", _shouldLog);
+            Logger.Debug($"AttackMode: Cleaning up attack indicators for: {player.PlayerName}", _shouldLog);
             player.SetSelectedEnemy(false);
             player.SetAttackModeIndicator(false);
             player.PlayerClicked -= OnEnemyClicked;
@@ -136,40 +135,40 @@ public class AttackMode : ICombatMode
 
     private void ShowEnemyBoard(Player newTarget)
     {
-        Logger.Debug($"Showing enemy board for: {newTarget.PlayerName}", _shouldLog);
+        Logger.Debug($"AttackMode: Showing enemy board for: {newTarget.PlayerName}", _shouldLog);
 
         if (_uiManager.LastEnemy != null)
         {
-            Logger.Debug($"Hiding last enemy board: {_uiManager.LastEnemy.PlayerName}", _shouldLog);
+            Logger.Debug($"AttackMode: Hiding last enemy board: {_uiManager.LastEnemy.PlayerName}", _shouldLog);
             CombatUiManager.ShowBoard(_uiManager.LastEnemy, false);
         }
         else
         {
-            Logger.Debug($"Hiding first enemy board: {_firstEnemy.PlayerName}", _shouldLog);
+            Logger.Debug($"AttackMode: Hiding first enemy board: {_firstEnemy.PlayerName}", _shouldLog);
             CombatUiManager.ShowBoard(_firstEnemy, false);
         }
 
-        Logger.Debug($"Setting LastEnemy to: {newTarget.PlayerName}", _shouldLog);
+        Logger.Debug($"AttackMode: Setting LastEnemy to: {newTarget.PlayerName}", _shouldLog);
         _uiManager.SetLastEnemy(newTarget);
         CombatUiManager.ShowBoard(newTarget, true);
     }
 
     private void OnEnemyClicked(Player player)
     {
-        Logger.Debug($"Enemy clicked: {player.PlayerName}", _shouldLog);
+        Logger.Debug($"AttackMode: Enemy clicked: {player.PlayerName}", _shouldLog);
         ExecuteAttack();
     }
 
     private void OnEnemyMouseHoveredIn(Player player)
     {
-        Logger.Debug($"Mouse entered enemy: {player.PlayerName}", _shouldLog);
+        Logger.Debug($"AttackMode: Mouse entered enemy: {player.PlayerName}", _shouldLog);
         if (player == TargetPlayer)
         {
-            Logger.Debug("Skipping - already targeting this enemy", _shouldLog);
+            Logger.Debug("AttackMode: Skipping - already targeting this enemy", _shouldLog);
             return;
         }
 
-        Logger.Debug($"Switching target from {TargetPlayer.PlayerName} to {player.PlayerName}", _shouldLog);
+        Logger.Debug($"AttackMode: Switching target from {TargetPlayer.PlayerName} to {player.PlayerName}", _shouldLog);
         TargetPlayer.SetSelectedEnemy(false);
         _targetEnemyIndex = _turnManager.GetPlayerIndex(player);
         TargetPlayer = player;
@@ -182,36 +181,36 @@ public class AttackMode : ICombatMode
     {
         if (TargetPlayer == null)
         {
-            Logger.Debug("No target selected, skipping attack", _shouldLog);
+            Logger.Debug("AttackMode: No target selected, skipping attack", _shouldLog);
             return;
         }
 
-        Logger.Debug($"Executing attack on: {TargetPlayer.PlayerName}", _shouldLog);
+        Logger.Debug($"AttackMode: Executing attack on: {TargetPlayer.PlayerName}", _shouldLog);
         _turnManager.EnemyTurnOrder.ForEach(player =>
         {
-            Logger.Debug($"Removing click handlers from: {player.PlayerName}", _shouldLog);
+            Logger.Debug($"AttackMode: Removing click handlers from: {player.PlayerName}", _shouldLog);
             player.PlayerClicked -= OnEnemyClicked;
             player.PlayerMouseHoveredIn -= OnEnemyMouseHoveredIn;
         });
 
         _combatManager.AttackSound.Play();
 
-        Logger.Debug($"Updating LastEnemy to: {TargetPlayer.PlayerName}", _shouldLog);
+        Logger.Debug($"AttackMode: Updating LastEnemy to: {TargetPlayer.PlayerName}", _shouldLog);
         _uiManager.SetLastEnemy(TargetPlayer);
         ShowEnemyBoard(TargetPlayer);
 
-        Logger.Debug("Initiating combat manager attack", _shouldLog);
+        Logger.Debug("AttackMode: Initiating combat manager attack", _shouldLog);
         _combatManager.ExecuteAttack(TargetPlayer);
     }
 
     private void CycleTargetForward()
     {
-        Logger.Debug($"******Cycling target forward from: {TargetPlayer.PlayerName}", _shouldLog);
+        Logger.Debug($"******AttackMode: Cycling target forward from: {TargetPlayer.PlayerName}", _shouldLog);
         TargetPlayer.SetSelectedEnemy(false);
         _targetEnemyIndex = (_targetEnemyIndex + 1) % _turnManager.EnemyTurnOrder.Count;
         Player nextTarget = _turnManager.EnemyTurnOrder[_targetEnemyIndex];
 
-        Logger.Debug($"New target: {nextTarget.PlayerName}", _shouldLog);
+        Logger.Debug($"AttackMode: New target: {nextTarget.PlayerName}", _shouldLog);
         ShowEnemyBoard(nextTarget);
 
         TargetPlayer = nextTarget;
@@ -220,7 +219,7 @@ public class AttackMode : ICombatMode
 
     private void CycleTargetBackward()
     {
-        Logger.Debug($"Cycling target backward from: {TargetPlayer.PlayerName}", _shouldLog);
+        Logger.Debug($"AttackMode: Cycling target backward from: {TargetPlayer.PlayerName}", _shouldLog);
         TargetPlayer.SetSelectedEnemy(false);
         _targetEnemyIndex--;
         if (_targetEnemyIndex < 0)
@@ -230,7 +229,7 @@ public class AttackMode : ICombatMode
 
         Player nextTarget = _turnManager.EnemyTurnOrder[_targetEnemyIndex];
 
-        Logger.Debug($"New target: {nextTarget.PlayerName}", _shouldLog);
+        Logger.Debug($"AttackMode: New target: {nextTarget.PlayerName}", _shouldLog);
         ShowEnemyBoard(nextTarget);
 
         TargetPlayer = nextTarget;

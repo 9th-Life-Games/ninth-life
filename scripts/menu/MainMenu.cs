@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Godot;
 using NinthLife.scripts.game;
 using NinthLife.scripts.utils;
@@ -8,12 +7,13 @@ namespace NinthLife.scripts.menu;
 public partial class MainMenu : Control
 {
     private static readonly bool ShouldLog = true;
-    private readonly Vector2 _drinkerPos = new(210, 193);
-    private readonly Vector2 _goblinPos = new(890, 193);
-    private readonly Vector2 _goblinThreePos = new(750, 193);
-    private readonly Vector2 _goblinTwoPos = new(820, 193);
-    private readonly Vector2 _hopePos = new(50, 145);
-    private readonly Vector2 _skullPos = new(140, 155);
+
+    private readonly Vector2 _drinkerPos = new(210, 248);
+    private readonly Vector2 _goblinPos = new(890, 248);
+    private readonly Vector2 _goblinThreePos = new(750, 248);
+    private readonly Vector2 _goblinTwoPos = new(820, 248);
+    private readonly Vector2 _hopePos = new(50, 248);
+    private readonly Vector2 _skullPos = new(140, 248);
     private SuitSelection _armorSelection;
     private Button _continueButton;
     private Player _drinker;
@@ -89,7 +89,7 @@ public partial class MainMenu : Control
     private void StartBackgroundMusic()
     {
         Logger.Debug("Starting background music", ShouldLog);
-        _musicPlayer?.Play();
+        // _musicPlayer?.Play();
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -337,8 +337,16 @@ public partial class MainMenu : Control
     {
         if (CardLibrary.Suits.TryGetValue(suit, out CardLibrary.CardData suitData))
         {
-            Logger.Debug($"Adding {suit} cards to {player.PlayerName}'s deck", ShouldLog);
-            AddCardsToPlayerDeck(player, suitData.Cards);
+            Logger.Debug($"Adding {suit} of type {suitData.Type} cards to {player.PlayerName}'s deck", ShouldLog);
+            if (suitData.Type == "weapon")
+            {
+                player.SetWeaponType(suit);
+            }
+
+            foreach (Card card in suitData.Cards)
+            {
+                player.Deck.Add(card.DuplicateCard());
+            }
         }
     }
 
@@ -384,14 +392,6 @@ public partial class MainMenu : Control
         Logger.Debug($"Finalizing deck for {player.PlayerName}", ShouldLog);
         player.ShuffleDeck(4);
         player.CalculateInitiative();
-    }
-
-    private static void AddCardsToPlayerDeck(Player player, List<Card> cards)
-    {
-        foreach (Card card in cards)
-        {
-            player.Deck.Add(card.DuplicateCard());
-        }
     }
 
     private void AddCharactersToGame()

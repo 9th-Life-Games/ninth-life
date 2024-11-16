@@ -193,7 +193,7 @@ public class AttackMode : ICombatMode
             player.PlayerMouseHoveredIn -= OnEnemyMouseHoveredIn;
         });
 
-        _combatManager.AttackSound.Play();
+        // _combatManager.AttackSound.Play();
 
         Logger.Debug($"AttackMode: Updating LastEnemy to: {TargetPlayer.PlayerName}", _shouldLog);
         _uiManager.SetLastEnemy(TargetPlayer);

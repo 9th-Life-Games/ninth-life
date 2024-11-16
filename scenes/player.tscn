@@ -1,8 +1,10 @@
-[gd_scene load_steps=9 format=3 uid="uid://dntos7fy5n6ko"]
+[gd_scene load_steps=14 format=3 uid="uid://dntos7fy5n6ko"]
 
 [ext_resource type="Script" path="res://scripts/game/Player.cs" id="1_wps60"]
 [ext_resource type="Texture2D" uid="uid://bfig3w6gk0hv" path="res://assets/Character Sprites/Skull/skull_sprite.png" id="2_0l6nn"]
 [ext_resource type="Script" path="res://scripts/game/Hand.cs" id="2_addbm"]
+[ext_resource type="Script" path="res://scripts/game/HealthBar.cs" id="3_khnfb"]
+[ext_resource type="Script" path="res://scripts/components/Health.cs" id="5_vnhhg"]
 
 [sub_resource type="Animation" id="Animation_dwq8j"]
 length = 0.001
@@ -29,6 +31,30 @@ tracks/1/keys = {
 "transitions": PackedFloat32Array(1),
 "update": 0,
 "values": [Color(1, 1, 1, 1)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Sprite2D:scale")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(1, 1)]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Sprite2D:position")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(0, 0)]
 }
 
 [sub_resource type="Animation" id="Animation_v41te"]
@@ -80,13 +106,60 @@ tracks/0/keys = {
 "values": [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]
 }
 
+[sub_resource type="Animation" id="Animation_28h21"]
+resource_name = "die"
+length = 0.3
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.3),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector2(1, 1), Vector2(0.8, 1.2), Vector2(0, 2)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Sprite2D:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.3),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 1), Color(1, 0, 0, 1), Color(1, 1, 1, 0)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Sprite2D:position")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.3),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(0, 0), Vector2(0, -100)]
+}
+
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_4mrgg"]
 _data = {
 "RESET": SubResource("Animation_dwq8j"),
 "block": SubResource("Animation_v41te"),
+"die": SubResource("Animation_28h21"),
 "hit": SubResource("Animation_2rpw8"),
 "idle": SubResource("Animation_bbrlc")
 }
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3rkwd"]
+bg_color = Color(0.12549, 0.0431373, 0.333333, 0.45098)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_s65uw"]
+bg_color = Color(0.0704313, 0.527741, 0.304118, 1)
 
 [node name="Player" type="Node2D" groups=["ComabtEntity"]]
 script = ExtResource("1_wps60")
@@ -118,3 +191,23 @@ visible = false
 libraries = {
 "": SubResource("AnimationLibrary_4mrgg")
 }
+
+[node name="HealthBar" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_left = -25.0
+offset_right = 25.0
+offset_bottom = 10.0
+script = ExtResource("3_khnfb")
+
+[node name="ProgressBar" type="ProgressBar" parent="HealthBar"]
+layout_mode = 0
+offset_right = 50.0
+offset_bottom = 10.0
+theme_override_styles/background = SubResource("StyleBoxFlat_3rkwd")
+theme_override_styles/fill = SubResource("StyleBoxFlat_s65uw")
+value = 100.0
+show_percentage = false
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("5_vnhhg")

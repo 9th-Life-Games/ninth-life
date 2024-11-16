@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using NinthLife.scripts.utils;
 
@@ -12,6 +13,7 @@ public partial class TurnOrderDisplay : Control
     private const float TransparentAlpha = 0.0f;
 
     private readonly Dictionary<string, Texture2D> _avatarCache = new();
+    private readonly Dictionary<Player, TextureRect> _playerAvatars = new();
     private readonly bool _shouldLog = true;
     private HBoxContainer _hBox;
 
@@ -31,6 +33,18 @@ public partial class TurnOrderDisplay : Control
         Logger.Debug($"TurnOrderDisplay: Adding avatar for player: {player.PlayerName}", _shouldLog);
         TextureRect avatarContainer = CreateAvatarContainer(player);
         _hBox.AddChild(avatarContainer);
+        _playerAvatars[player] = avatarContainer;
+    }
+
+    public void RemoveAvatar(Player player)
+    {
+        if (_playerAvatars.TryGetValue(player, out TextureRect textureRect))
+        {
+            Logger.Debug($"TurnOrderDisplay: Removing avatar for player: {player.PlayerName}", _shouldLog);
+            _hBox.RemoveChild(textureRect);
+            textureRect.QueueFree();
+            _playerAvatars.Remove(player);
+        }
     }
 
     private TextureRect CreateAvatarContainer(Player player)
@@ -90,6 +104,12 @@ public partial class TurnOrderDisplay : Control
 
     private void CycleExistingAvatars(Player player)
     {
+        if (_playerAvatars.Count == 0)
+        {
+            AddAvatar(player);
+            return;
+        }
+
         Control firstAvatar = (Control)_hBox.GetChild(0);
         AnimateAvatarTransition(firstAvatar, player);
     }
@@ -116,6 +136,15 @@ public partial class TurnOrderDisplay : Control
         Logger.Debug("TurnOrderDisplay: Removing old avatar", _shouldLog);
         _hBox.RemoveChild(avatar);
         avatar.QueueFree();
+
+        // Remove from dictionary if present
+        foreach (KeyValuePair<Player, TextureRect> kvp in _playerAvatars.ToList())
+        {
+            if (kvp.Value == avatar)
+            {
+                _playerAvatars.Remove(kvp.Key);
+            }
+        }
     }
 
     private void AddNewAvatarWithFadeIn(Player player)
@@ -123,6 +152,7 @@ public partial class TurnOrderDisplay : Control
         Logger.Debug($"TurnOrderDisplay: Adding new avatar with fade in for: {player.PlayerName}", _shouldLog);
         TextureRect newAvatar = CreateNewAvatarWithFade(player);
         _hBox.AddChild(newAvatar);
+        _playerAvatars[player] = newAvatar;
         AnimateFadeIn(newAvatar);
     }
 
@@ -147,6 +177,7 @@ public partial class TurnOrderDisplay : Control
     {
         Logger.Debug("TurnOrderDisplay: Cleaning up turn order display", _shouldLog);
         CleanupCache();
+        CleanupAvatars();
     }
 
     private void CleanupCache()
@@ -157,5 +188,15 @@ public partial class TurnOrderDisplay : Control
         }
 
         _avatarCache.Clear();
+    }
+
+    private void CleanupAvatars()
+    {
+        foreach (TextureRect textureRect in _playerAvatars.Values)
+        {
+            textureRect.QueueFree();
+        }
+
+        _playerAvatars.Clear();
     }
 }

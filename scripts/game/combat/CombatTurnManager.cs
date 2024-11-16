@@ -32,6 +32,22 @@ public class CombatTurnManager
         InitializeFirstTurn();
     }
 
+    public void RemovePlayer(Player player)
+    {
+        _turnOrderDisplay.RemoveAvatar(player);
+        TurnOrder.Remove(player);
+        if (player.IsAlly)
+        {
+            AllyTurnOrder.Remove(player);
+        }
+        else
+        {
+            EnemyTurnOrder.Remove(player);
+        }
+
+        GameUtils.CombatEntities.Remove(player);
+    }
+
     private void ProcessPlayer(Player player, CombatManager combatManager)
     {
         Logger.Debug($"CombatTurnManager: Processing player: {player.PlayerName} (Initiative: {player.Initiative})",

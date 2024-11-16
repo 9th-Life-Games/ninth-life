@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using NinthLife.scripts.components;
 using NinthLife.scripts.utils;
 
 namespace NinthLife.scripts.game;
@@ -14,6 +15,12 @@ public partial class Player : Node2D
 
     [Signal]
     public delegate void AllyTurnReadyEventHandler();
+
+    [Signal]
+    public delegate void AttackCompleteEventHandler();
+
+    [Signal]
+    public delegate void DeathAnimationFinishedEventHandler();
 
     [Signal]
     public delegate void EnemyFinishedTurnEventHandler();
@@ -29,7 +36,7 @@ public partial class Player : Node2D
 
     // Constants
     private const int HandSize = 4;
-    private const float AnimationSpeed = 0.25f;
+    public const float AnimationSpeed = 0.25f;
     private const float DefenseDrawDelay = 1.75f;
     private const float EnemyPlayDelay1 = 0.5f;
     private const float EnemyPlayDelay2 = 1.5f;
@@ -47,11 +54,14 @@ public partial class Player : Node2D
     private Node2D _defenseDraw;
     private Button _endTurnButton;
     private Hand _hand;
+    private HealthBar _healthBar;
 
     // State
     private int _initiativeBonus;
     private int _maxHealth;
     private Button _playerButton;
+    public Health Health { get; private set; }
+    public string WeaponType { get; private set; }
 
     // Public properties
     public int CurrentCardPlays { get; private set; }
@@ -80,6 +90,20 @@ public partial class Player : Node2D
         SetupEventHandlers();
         ConfigurePlayerBoard();
         InitializePlayerState();
+        InitializeHealth();
+    }
+
+    public void PlayDeathAnimation()
+    {
+        Logger.Debug($"Player: Playing death animation for {PlayerName}", _shouldLog);
+        _animationPlayer.Play("die");
+    }
+
+    public List<Card> GetActiveCards()
+    {
+        List<Card> activeCards = new();
+        // Add any cards in play, in hand, etc.
+        return activeCards;
     }
 
     private void InitializeComponents()
@@ -121,6 +145,32 @@ public partial class Player : Node2D
         DrawCards(HandSize, 0.01);
     }
 
+    private void InitializeHealth()
+    {
+        Health = GetNode<Health>("Health");
+        _healthBar = GetNode<HealthBar>("HealthBar");
+
+        // Different health values for different characters
+        int maxHealth = PlayerName switch
+        {
+            "Skull" => 10,
+            "Hope" => 10,
+            "Drinker" => 10,
+            "Goblin" => 10,
+            "Goblin 2" => 10,
+            "Goblin 3" => 10,
+            _ => 15
+        };
+
+        Health.Initialize(maxHealth);
+        _healthBar.Initialize(Health);
+    }
+
+    public void PlayerDeath()
+    {
+        QueueFree();
+    }
+
     private void OnPlayerButtonPressed()
     {
         Logger.Debug($"Player: Player button pressed for {PlayerName}", _shouldLog);
@@ -144,7 +194,28 @@ public partial class Player : Node2D
     private void OnAnimationFinished(StringName animationName)
     {
         Logger.Debug($"Player: Animation finished for {PlayerName}: {animationName}", _shouldLog);
-        _animationPlayer.Play("idle");
+        switch (animationName)
+        {
+            case "hit":
+                _animationPlayer.Play(Health.CurrentHealth <= 0 ? "die" : "idle");
+                if (Health.CurrentHealth <= 0)
+                {
+                    EmitSignal(SignalName.AttackComplete);
+                }
+
+                break;
+            case "block":
+                _animationPlayer.Play(Health.CurrentHealth <= 0 ? "die" : "idle");
+                EmitSignal(SignalName.AttackComplete);
+
+                break;
+            case "die":
+                EmitSignal(SignalName.AttackComplete);
+                break;
+            default:
+                _animationPlayer.Play("idle");
+                break;
+        }
     }
 
     public void PlayHitAnimation()
@@ -551,6 +622,11 @@ public partial class Player : Node2D
         Logger.Debug(
             $"Player: Calculated initiative for {PlayerName}: {Initiative} (base: {Initiative - _initiativeBonus}, bonus: {_initiativeBonus})",
             _shouldLog);
+    }
+
+    public void SetWeaponType(string weaponType)
+    {
+        WeaponType = weaponType;
     }
 
     public void ShuffleDeck(int repeat)

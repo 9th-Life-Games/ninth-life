@@ -152,6 +152,38 @@ public partial class CombatManager : Node2D
         SetAllPlayerButtonsEnabled(false);
     }
 
+    private void OnPlayerDeathAnimationsCompleted(Player player)
+    {
+        // Handle any UI updates that should happen after animations but before final cleanup
+        Logger.Debug($"CombatManager: Death animations completed for {player.PlayerName}", _shouldLog);
+
+        Player replacementPlayer = GetReplacementPlayer(player);
+        _combatUiManager.HandlePlayerDeath(player, replacementPlayer);
+    }
+
+    private void OnPlayerDeathSequenceCompleted(Player player)
+    {
+        Logger.Debug($"CombatManager: Death sequence completed for {player.PlayerName}", _shouldLog);
+
+        // Now it's safe to remove the player and clean up
+        _combatTurnManager.RemovePlayer(player);
+        player.PlayerDeath();
+    }
+
+    private Player GetReplacementPlayer(Player dyingPlayer)
+    {
+        if (dyingPlayer.IsAlly)
+        {
+            return dyingPlayer == _combatTurnManager.AllyTurnOrder[0]
+                ? _combatTurnManager.AllyTurnOrder[^1]
+                : _combatTurnManager.AllyTurnOrder[0];
+        }
+
+        return dyingPlayer == _combatTurnManager.EnemyTurnOrder[0]
+            ? _combatTurnManager.EnemyTurnOrder[^1]
+            : _combatTurnManager.EnemyTurnOrder[0];
+    }
+
     private void OnAllyHandEnabled()
     {
         Logger.Debug("CombatManager: Ally hand enabled, enabling player buttons", _shouldLog);
@@ -243,6 +275,11 @@ public partial class CombatManager : Node2D
         {
             Logger.Debug($"CombatManager: {target.PlayerName} was hit by the attack", _shouldLog);
             target.PlayHitAnimation();
+            target.Health.TakeDamage(_combatTurnManager.CurrentPlayer.WeaponType);
+            if (target.Health.CurrentHealth <= 0)
+            {
+                GetTree().CreateTimer(2).Timeout += () => RemovePlayerFromGame(target);
+            }
         }
     }
 
@@ -254,6 +291,41 @@ public partial class CombatManager : Node2D
         }
 
         return card.NumericValue;
+    }
+
+    private void RemovePlayerFromGame(Player player)
+    {
+        switch (player.IsAlly)
+        {
+            case true when _combatTurnManager.AllyTurnOrder.Count == 1:
+                Logger.Debug("CombatManager: *****Game Over*****");
+                return;
+            case false when _combatTurnManager.EnemyTurnOrder.Count == 1:
+                Logger.Debug("CombatManager: *****You Win!!!*****");
+                return;
+            case true when player == _combatUiManager.LastAlly:
+            {
+                Player replacementPlayer = player == _combatTurnManager.AllyTurnOrder[0]
+                    ? _combatTurnManager.AllyTurnOrder[^1]
+                    : _combatTurnManager.AllyTurnOrder[0];
+                _combatUiManager.HandlePlayerDeath(player, replacementPlayer);
+                break;
+            }
+            case false:
+            {
+                Player replacementPlayer = player == _combatTurnManager.EnemyTurnOrder[0]
+                    ? _combatTurnManager.EnemyTurnOrder[^1]
+                    : _combatTurnManager.EnemyTurnOrder[0];
+                _combatUiManager.HandlePlayerDeath(player, replacementPlayer);
+                break;
+            }
+        }
+
+        GetTree().CreateTimer(Player.AnimationSpeed).Timeout += () =>
+        {
+            _combatTurnManager.RemovePlayer(player);
+            player.PlayerDeath();
+        };
     }
 
     private void ExitCurrentMode()

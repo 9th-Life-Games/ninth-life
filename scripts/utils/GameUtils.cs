@@ -44,25 +44,29 @@ public partial class GameUtils : Node
         Sprite2D sprite = combatEntity.GetNode<Sprite2D>("Sprite2D");
         sprite.Texture = (Texture2D)texture;
         sprite.Hframes = hFrames;
-        sprite.Position = position;
 
         float spriteWidth = sprite.Texture.GetWidth();
         float spriteHeight = sprite.Texture.GetHeight();
+
+        sprite.Position = new Vector2(position.X, position.Y - (spriteHeight / 2));
+
+        Control healthBar = combatEntity.GetNode<Control>("HealthBar");
+        healthBar.Position = new Vector2(sprite.Position.X - 25, sprite.Position.Y - (spriteHeight / 2) - 10);
 
         Button button = combatEntity.GetNode<Button>("Sprite2D/Button");
         button.Size = new Vector2(spriteWidth / 3, spriteHeight);
         button.Position = new Vector2(-spriteWidth / 3 / 2, -spriteHeight / 2);
 
         Polygon2D turnIndicator = combatEntity.GetNode<Polygon2D>("TurnIndicator");
-        turnIndicator.Position = new Vector2(position.X, position.Y + (-spriteHeight / 2) - 20);
+        turnIndicator.Position = new Vector2(position.X, position.Y - spriteHeight - 32);
         turnIndicator.Color = isAlly ? new Color("00ff00") : new Color("ff0000");
 
         Polygon2D previewIndicator = combatEntity.GetNode<Polygon2D>("PreviewIndicator");
-        previewIndicator.Position = new Vector2(position.X, position.Y + (-spriteHeight / 2) - 20);
+        previewIndicator.Position = new Vector2(position.X, position.Y - spriteHeight - 32);
         previewIndicator.Color = Colors.Gray;
 
         Polygon2D attackModeIndicator = combatEntity.GetNode<Polygon2D>("AttackModeIndicator");
-        attackModeIndicator.Position = new Vector2(position.X, position.Y + (-spriteHeight / 2) - 20);
+        attackModeIndicator.Position = new Vector2(position.X, position.Y - spriteHeight - 32);
         attackModeIndicator.Color = Colors.Yellow;
 
         return combatEntity;

@@ -8,8 +8,9 @@ public partial class HealthBar : Control
 {
     private readonly bool _shouldLog = true;
     private ProgressBar _healthBar;
+
     private Health _healthComponent;
-    private Label _healthLabel;
+    // private Label _healthLabel;
 
     public override void _Ready()
     {
@@ -20,7 +21,7 @@ public partial class HealthBar : Control
     private void InitializeComponents()
     {
         _healthBar = GetNode<ProgressBar>("ProgressBar");
-        _healthLabel = GetNode<Label>("HealthLabel");
+        // _healthLabel = GetNode<Label>("HealthLabel");
     }
 
     public void Initialize(Health healthComponent)

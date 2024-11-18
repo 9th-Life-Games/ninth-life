@@ -7,6 +7,12 @@ namespace NinthLife.scripts.game;
 
 public partial class CombatManager : Node2D
 {
+    [Signal]
+    public delegate void AttackModeFinishedEventHandler();
+
+    [Signal]
+    public delegate void EnemyTurnResolvedEventHandler();
+
     private readonly CombatTurnManager _combatTurnManager = new();
     private readonly CombatUiManager _combatUiManager = new();
     private readonly bool _shouldLog = true;
@@ -161,15 +167,6 @@ public partial class CombatManager : Node2D
         _combatUiManager.HandlePlayerDeath(player, replacementPlayer);
     }
 
-    private void OnPlayerDeathSequenceCompleted(Player player)
-    {
-        Logger.Debug($"CombatManager: Death sequence completed for {player.PlayerName}", _shouldLog);
-
-        // Now it's safe to remove the player and clean up
-        _combatTurnManager.RemovePlayer(player);
-        player.PlayerDeath();
-    }
-
     private Player GetReplacementPlayer(Player dyingPlayer)
     {
         if (dyingPlayer.IsAlly)
@@ -223,7 +220,7 @@ public partial class CombatManager : Node2D
             currentMode.TargetPlayer.PlayerBoard.AddCard(card, true);
         }
 
-        ExitCurrentMode();
+        GetTree().CreateTimer(.5).Timeout += ExitAttackMode;
     }
 
     private void AttackButtonOnPressed(bool pressed)
@@ -249,11 +246,6 @@ public partial class CombatManager : Node2D
         Logger.Debug($"CombatManager: {target.PlayerName} drawing defense card", _shouldLog);
         return target.DrawCardForDefense(() =>
         {
-            if (_combatTurnManager.CurrentPlayer.IsAlly)
-            {
-                _combatUiManager.SetEndTurnButtonState(true);
-            }
-
             if (_combatTurnManager.CurrentPlayer.CurrentCardPlays < _combatTurnManager.CurrentPlayer.TotalCardPlays)
             {
                 CombatUiManager.ShowHand(_combatTurnManager.CurrentPlayer, true);
@@ -266,20 +258,58 @@ public partial class CombatManager : Node2D
         int defenseValue = CalculateDefenseValue(defenseCard);
         Logger.Debug($"CombatManager: Attack roll: {_rollValue} vs Defense: {defenseValue}", _shouldLog);
 
+        void OnDidUnitDie(bool didDie)
+        {
+            void OnAttackFinished()
+            {
+                AttackModeFinished -= OnAttackFinished;
+                if (didDie)
+                {
+                    RemovePlayerFromGame(target);
+                }
+                else
+                {
+                    EmitSignal(SignalName.EnemyTurnResolved);
+                }
+
+                if (!target.IsAlly)
+                {
+                    _combatUiManager.SetEndTurnButtonState(true);
+                }
+            }
+
+            target.Health.DidUnitDie -= OnDidUnitDie;
+            AttackModeFinished += OnAttackFinished;
+        }
+
+        target.Health.DidUnitDie += OnDidUnitDie;
+
+
         if (defenseValue > _rollValue)
         {
             Logger.Debug($"CombatManager: {target.PlayerName} blocked the attack", _shouldLog);
             target.PlayBlockAnimation();
+
+            void OnAttackFinished()
+            {
+                AttackModeFinished -= OnAttackFinished;
+                if (!target.IsAlly)
+                {
+                    _combatUiManager.SetEndTurnButtonState(true);
+                }
+
+                EmitSignal(SignalName.EnemyTurnResolved);
+            }
+
+            AttackModeFinished += OnAttackFinished;
         }
         else
         {
             Logger.Debug($"CombatManager: {target.PlayerName} was hit by the attack", _shouldLog);
+
+
             target.PlayHitAnimation();
             target.Health.TakeDamage(_combatTurnManager.CurrentPlayer.WeaponType);
-            if (target.Health.CurrentHealth <= 0)
-            {
-                GetTree().CreateTimer(2).Timeout += () => RemovePlayerFromGame(target);
-            }
         }
     }
 
@@ -321,17 +351,18 @@ public partial class CombatManager : Node2D
             }
         }
 
-        GetTree().CreateTimer(Player.AnimationSpeed).Timeout += () =>
+        player.PlayerDeath(() =>
         {
             _combatTurnManager.RemovePlayer(player);
-            player.PlayerDeath();
-        };
+            GetTree().CreateTimer(0.3).Timeout += () => EmitSignal(SignalName.EnemyTurnResolved);
+        });
     }
 
-    private void ExitCurrentMode()
+    private void ExitAttackMode()
     {
         Logger.Debug("CombatManager: Exiting current combat mode", _shouldLog);
         _modeManager.ExitCurrentMode();
+        EmitSignal(SignalName.AttackModeFinished);
     }
 
     private void RollForAttack()
@@ -374,7 +405,7 @@ public partial class CombatManager : Node2D
         if (!currentPlayer.IsAlly)
         {
             Logger.Debug($"CombatManager: Removing enemy turn handler from {currentPlayer.PlayerName}", _shouldLog);
-            currentPlayer.EnemyFinishedTurn -= OnEnemyFinishedTurn;
+            currentPlayer.EnemyFinishedPlayingHand -= OnEnemyFinishedPlayingHand;
         }
     }
 
@@ -409,7 +440,7 @@ public partial class CombatManager : Node2D
         if (!currentPlayer.IsAlly)
         {
             Logger.Debug($"CombatManager: Setting up enemy turn handler for {currentPlayer.PlayerName}", _shouldLog);
-            currentPlayer.EnemyFinishedTurn += OnEnemyFinishedTurn;
+            currentPlayer.EnemyFinishedPlayingHand += OnEnemyFinishedPlayingHand;
         }
 
         _combatUiManager.ShowPlayerUi(currentPlayer);
@@ -421,10 +452,10 @@ public partial class CombatManager : Node2D
     {
         Logger.Debug("CombatManager: Initializing enemy AI turn", _shouldLog);
         GetTree().CreateTimer(1).Timeout += _combatTurnManager.CurrentPlayer.EnemyPlayHand;
-        _combatTurnManager.CurrentPlayer.EnemyFinishedTurn += OnEnemyFinishedTurn;
+        _combatTurnManager.CurrentPlayer.EnemyFinishedPlayingHand += OnEnemyFinishedPlayingHand;
     }
 
-    private void OnEnemyFinishedTurn()
+    private void OnEnemyFinishedPlayingHand()
     {
         Logger.Debug("CombatManager: Enemy finished turn, executing attack sequence", _shouldLog);
         _modeManager.EnterMode(CombatModeManager.CombatModeType.Attack, false);
@@ -445,6 +476,13 @@ public partial class CombatManager : Node2D
     private void ScheduleNextTurn()
     {
         Logger.Debug("CombatManager: Scheduling turn transition", _shouldLog);
-        GetTree().CreateTimer(4).Timeout += NextTurn;
+
+        void OnEnemyTurnResolved()
+        {
+            EnemyTurnResolved -= OnEnemyTurnResolved;
+            GetTree().CreateTimer(0.5).Timeout += NextTurn;
+        }
+
+        EnemyTurnResolved += OnEnemyTurnResolved;
     }
 }

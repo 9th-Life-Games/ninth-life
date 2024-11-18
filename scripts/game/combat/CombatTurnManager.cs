@@ -34,18 +34,19 @@ public class CombatTurnManager
 
     public void RemovePlayer(Player player)
     {
-        _turnOrderDisplay.RemoveAvatar(player);
-        TurnOrder.Remove(player);
-        if (player.IsAlly)
-        {
-            AllyTurnOrder.Remove(player);
-        }
-        else
-        {
-            EnemyTurnOrder.Remove(player);
-        }
-
-        GameUtils.CombatEntities.Remove(player);
+        // player.dead
+        // _turnOrderDisplay.RemoveAvatar(player);
+        // TurnOrder.Remove(player);
+        // if (player.IsAlly)
+        // {
+        //     AllyTurnOrder.Remove(player);
+        // }
+        // else
+        // {
+        //     EnemyTurnOrder.Remove(player);
+        // }
+        //
+        // GameUtils.CombatEntities.Remove(player);
     }
 
     private void ProcessPlayer(Player player, CombatManager combatManager)
@@ -84,8 +85,17 @@ public class CombatTurnManager
 
     public Player GetNextPlayer()
     {
-        Player nextPlayer = TurnOrder[1];
-        Logger.Debug($"CombatTurnManager: Next player will be: {nextPlayer.PlayerName}", _shouldLog);
+        Player nextPlayer = null;
+        for (int i = 1; i < TurnOrder.Count; i++)
+        {
+            if (!TurnOrder[i].IsDead)
+            {
+                nextPlayer ??= TurnOrder[i];
+            }
+        }
+
+        // Player nextPlayer = TurnOrder[1];
+        Logger.Debug($"CombatTurnManager: Next player will be: {nextPlayer?.PlayerName}", _shouldLog);
         return nextPlayer;
     }
 
@@ -151,6 +161,7 @@ public class CombatTurnManager
     private void SetNewCurrentPlayer(Player nextPlayer)
     {
         Logger.Debug($"CombatTurnManager: Setting new current player to {nextPlayer.PlayerName}", _shouldLog);
+        // if nextPlayer.isDead then skip
         CurrentPlayer = nextPlayer;
     }
 }

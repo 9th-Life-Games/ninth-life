@@ -23,7 +23,7 @@ public partial class Player : Node2D
     public delegate void DeathAnimationFinishedEventHandler();
 
     [Signal]
-    public delegate void EnemyFinishedTurnEventHandler();
+    public delegate void EnemyFinishedPlayingHandEventHandler();
 
     [Signal]
     public delegate void PlayerClickedEventHandler(Player player);
@@ -69,6 +69,7 @@ public partial class Player : Node2D
     public int MasteryBonus { get; private set; } = 3;
     public bool IsHandEnabled { get; private set; }
     public bool IsAlly { get; set; }
+    public bool IsDead { get; private set; }
     public int Initiative { get; private set; }
     public string PlayerName { get; set; }
 
@@ -164,11 +165,23 @@ public partial class Player : Node2D
 
         Health.Initialize(maxHealth);
         _healthBar.Initialize(Health);
+        Health.UnitDied += OnUnitDied;
     }
 
-    public void PlayerDeath()
+    private void OnUnitDied()
     {
-        QueueFree();
+        IsDead = true;
+    }
+
+    public void PlayerDeath(Action callback)
+    {
+        _animationPlayer.Play("die");
+        GetTree().CreateTimer(.3).Timeout += () =>
+        {
+            EmitSignal(SignalName.DeathAnimationFinished);
+            callback?.Invoke();
+            // QueueFree();
+        };
     }
 
     private void OnPlayerButtonPressed()
@@ -191,27 +204,22 @@ public partial class Player : Node2D
         _animationPlayer.AnimationFinished += OnAnimationFinished;
     }
 
+    public void OnPlayerAnimationFinished(Action<StringName> callback)
+    {
+        void OnFinished(StringName animationName)
+        {
+            _animationPlayer.AnimationFinished -= OnFinished;
+            callback?.Invoke(animationName);
+        }
+
+        _animationPlayer.AnimationFinished += OnFinished;
+    }
+
     private void OnAnimationFinished(StringName animationName)
     {
         Logger.Debug($"Player: Animation finished for {PlayerName}: {animationName}", _shouldLog);
         switch (animationName)
         {
-            case "hit":
-                _animationPlayer.Play(Health.CurrentHealth <= 0 ? "die" : "idle");
-                if (Health.CurrentHealth <= 0)
-                {
-                    EmitSignal(SignalName.AttackComplete);
-                }
-
-                break;
-            case "block":
-                _animationPlayer.Play(Health.CurrentHealth <= 0 ? "die" : "idle");
-                EmitSignal(SignalName.AttackComplete);
-
-                break;
-            case "die":
-                EmitSignal(SignalName.AttackComplete);
-                break;
             default:
                 _animationPlayer.Play("idle");
                 break;
@@ -491,7 +499,7 @@ public partial class Player : Node2D
         GetTree().CreateTimer(EnemyPlayDelay2).Timeout += () =>
         {
             card2.GetNode<Button>("Button").EmitSignal(BaseButton.SignalName.Pressed);
-            EmitSignal(SignalName.EnemyFinishedTurn);
+            EmitSignal(SignalName.EnemyFinishedPlayingHand);
         };
     }
 

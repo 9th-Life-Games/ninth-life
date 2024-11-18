@@ -13,7 +13,7 @@ public partial class TurnOrderDisplay : Control
     private const float TransparentAlpha = 0.0f;
 
     private readonly Dictionary<string, Texture2D> _avatarCache = new();
-    private readonly Dictionary<Player, TextureRect> _playerAvatars = new();
+    private readonly Dictionary<Player, Control> _playerAvatars = new();
     private readonly bool _shouldLog = true;
     private HBoxContainer _hBox;
 
@@ -31,30 +31,54 @@ public partial class TurnOrderDisplay : Control
     public void AddAvatar(Player player)
     {
         Logger.Debug($"TurnOrderDisplay: Adding avatar for player: {player.PlayerName}", _shouldLog);
-        TextureRect avatarContainer = CreateAvatarContainer(player);
+        Control avatarContainer = CreateAvatarContainer(player);
         _hBox.AddChild(avatarContainer);
         _playerAvatars[player] = avatarContainer;
     }
 
+    private ColorRect CreateAvatarWrapper(Control avatarContainer)
+    {
+        ColorRect avatarContainerColorRect = new();
+        avatarContainerColorRect.Color = Colors.Gray with { A = 1 };
+        avatarContainerColorRect.AddChild(avatarContainer);
+        avatarContainerColorRect.CustomMinimumSize = avatarContainerColorRect.CustomMinimumSize with { X = 50 };
+        return avatarContainerColorRect;
+    }
+
     public void RemoveAvatar(Player player)
     {
-        if (_playerAvatars.TryGetValue(player, out TextureRect textureRect))
+        if (_playerAvatars.TryGetValue(player, out Control colorRect))
         {
             Logger.Debug($"TurnOrderDisplay: Removing avatar for player: {player.PlayerName}", _shouldLog);
-            _hBox.RemoveChild(textureRect);
-            textureRect.QueueFree();
+            _hBox.RemoveChild(colorRect);
+            colorRect.QueueFree();
             _playerAvatars.Remove(player);
         }
     }
 
-    private TextureRect CreateAvatarContainer(Player player)
+    private Control CreateAvatarContainer(Player player)
     {
-        return new TextureRect
+        CenterContainer container = new();
+
+        // Create the background ColorRect
+        ColorRect background = new()
+        {
+            Color = Colors.Gray with { A = TransparentAlpha }, CustomMinimumSize = new Vector2(50, 50)
+        };
+
+        // Create the TextureRect
+        TextureRect textureRect = new()
         {
             ExpandMode = TextureRect.ExpandModeEnum.FitWidth,
             StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+            CustomMinimumSize = new Vector2(50, 50),
             Texture = GetAvatarPathFromSprite(player)
         };
+
+        container.AddChild(background);
+        container.AddChild(textureRect);
+
+        return container;
     }
 
     private Texture2D GetAvatarPathFromSprite(Player player)
@@ -138,7 +162,7 @@ public partial class TurnOrderDisplay : Control
         avatar.QueueFree();
 
         // Remove from dictionary if present
-        foreach (KeyValuePair<Player, TextureRect> kvp in _playerAvatars.ToList())
+        foreach (KeyValuePair<Player, Control> kvp in _playerAvatars.ToList())
         {
             if (kvp.Value == avatar)
             {
@@ -150,24 +174,52 @@ public partial class TurnOrderDisplay : Control
     private void AddNewAvatarWithFadeIn(Player player)
     {
         Logger.Debug($"TurnOrderDisplay: Adding new avatar with fade in for: {player.PlayerName}", _shouldLog);
-        TextureRect newAvatar = CreateNewAvatarWithFade(player);
+        Control newAvatar = CreateNewAvatarWithFade(player);
         _hBox.AddChild(newAvatar);
         _playerAvatars[player] = newAvatar;
         AnimateFadeIn(newAvatar);
     }
 
-    private TextureRect CreateNewAvatarWithFade(Player player)
+    private Control CreateNewAvatarWithFade(Player player)
     {
-        return new TextureRect
+        CenterContainer container = new() { Modulate = new Color(1, 1, 1, TransparentAlpha) };
+
+        // Create the background ColorRect
+        ColorRect background = new()
+        {
+            Color = Colors.Gray with { A = TransparentAlpha }, CustomMinimumSize = new Vector2(50, 50)
+        };
+
+        // Create the TextureRect
+        TextureRect textureRect = new()
         {
             ExpandMode = TextureRect.ExpandModeEnum.FitWidth,
             StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
-            Texture = GetAvatarPathFromSprite(player),
-            Modulate = new Color(1, 1, 1, TransparentAlpha)
+            CustomMinimumSize = new Vector2(50, 50),
+            Texture = GetAvatarPathFromSprite(player)
         };
+
+        container.AddChild(background);
+        container.AddChild(textureRect);
+
+        return container;
+    }
+    
+    public void SetPreviewState(Player player, bool isPreview)
+    {
+        if (_playerAvatars.TryGetValue(player, out Control container))
+        {
+            // Find the ColorRect (background) within the CenterContainer
+            ColorRect background = container.GetChild<ColorRect>(0);
+        
+            // Animate the background alpha
+            Tween tween = GetTree().CreateTween();
+            float targetAlpha = isPreview ? 0.5f : TransparentAlpha;
+            tween.TweenProperty(background, "color:a", targetAlpha, FadeAnimationDuration);
+        }
     }
 
-    private void AnimateFadeIn(TextureRect avatar)
+    private void AnimateFadeIn(Control avatar)
     {
         Tween fadeInTween = GetTree().CreateTween();
         fadeInTween.TweenProperty(avatar, "modulate:a", DefaultAlpha, FadeAnimationDuration);
@@ -192,9 +244,9 @@ public partial class TurnOrderDisplay : Control
 
     private void CleanupAvatars()
     {
-        foreach (TextureRect textureRect in _playerAvatars.Values)
+        foreach (Control colorRect in _playerAvatars.Values)
         {
-            textureRect.QueueFree();
+            colorRect.QueueFree();
         }
 
         _playerAvatars.Clear();

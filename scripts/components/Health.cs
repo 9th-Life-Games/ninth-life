@@ -10,6 +10,9 @@ public partial class Health : Node
     public delegate void DamageTakenEventHandler(int amount);
 
     [Signal]
+    public delegate void DidUnitDieEventHandler(bool didDie);
+
+    [Signal]
     public delegate void HealedEventHandler(int amount);
 
     [Signal]
@@ -61,6 +64,7 @@ public partial class Health : Node
 
         CurrentHealth -= calculatedDamage;
         EmitSignal(SignalName.DamageTaken, calculatedDamage);
+        EmitSignal(SignalName.DidUnitDie, CurrentHealth <= 0);
     }
 
     private int CalculateDamage(string weaponType)

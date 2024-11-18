@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://cruxuu5e8mkvj"]
+[gd_scene load_steps=13 format=3 uid="uid://cruxuu5e8mkvj"]
 
 [ext_resource type="Script" path="res://scripts/game/Game.cs" id="1_uqf54"]
 [ext_resource type="Texture2D" uid="uid://ia53v7kydn0a" path="res://assets/Backgrounds/Combat/Background_Dungeon_v2.png" id="2_c8b80"]
@@ -9,7 +9,6 @@
 [ext_resource type="FontFile" uid="uid://diqt2vii6tchx" path="res://assets/Fonts/CloisterBlack.ttf" id="6_7xwbe"]
 [ext_resource type="AudioStream" uid="uid://mosf4pewpnbw" path="res://assets/Music/Battle Themes/9L Battle Theme 072523.mp3" id="8_w48ft"]
 [ext_resource type="AudioStream" uid="uid://dlg65p165hjxl" path="res://assets/Music/Firearm_Attack_SFX.mp3" id="9_fq0hx"]
-[ext_resource type="Script" path="res://scripts/components/DeathSequenceManager.cs" id="10_uyd1s"]
 
 [sub_resource type="Animation" id="Animation_3aja4"]
 length = 0.001
@@ -203,6 +202,3 @@ stream = ExtResource("8_w48ft")
 
 [node name="AttackSound" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("9_fq0hx")
-
-[node name="DeathSequenceManager" type="Node" parent="."]
-script = ExtResource("10_uyd1s")

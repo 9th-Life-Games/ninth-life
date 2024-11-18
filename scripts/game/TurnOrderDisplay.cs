@@ -56,6 +56,39 @@ public partial class TurnOrderDisplay : Control
         }
     }
 
+    public void RevivePlayerAvatar(Player revivedPlayer, int index)
+    {
+        Control avatarContainer = CreateAvatarContainer(revivedPlayer);
+        avatarContainer.Modulate = new Color(1, 1, 1, TransparentAlpha);
+        _hBox.AddChild(avatarContainer);
+        _playerAvatars[revivedPlayer] = avatarContainer;
+
+        // Store original positions of containers that need to move
+        List<(Control container, Vector2 startPos, Vector2 endPos)> animations = new();
+
+        // Get containers that need to shift
+        for (int i = index; i < _hBox.GetChildCount() - 1; i++)
+        {
+            Control container = (Control)_hBox.GetChild(i);
+            animations.Add((container, container.Position, container.Position with { X = container.Position.X + 50 }));
+        }
+
+        // Move revived container to correct position
+        _hBox.MoveChild(avatarContainer, index);
+
+        // Create parallel animations
+        Tween tween = GetTree().CreateTween().SetParallel();
+
+        // Fade in revived avatar
+        tween.TweenProperty(avatarContainer, "modulate:a", DefaultAlpha, FadeAnimationDuration);
+
+        // Slide affected containers
+        foreach ((Control container, Vector2 start, Vector2 end) in animations)
+        {
+            tween.TweenProperty(container, "position", end, FadeAnimationDuration);
+        }
+    }
+
     private Control CreateAvatarContainer(Player player)
     {
         CenterContainer container = new();
@@ -155,6 +188,27 @@ public partial class TurnOrderDisplay : Control
         tween.TweenCallback(Callable.From(onComplete));
     }
 
+    // public void SetPlayerVisibility(Player player, bool isVisible)
+    // {
+    //     if (_playerAvatars.TryGetValue(player, out Control container))
+    //     {
+    //         // Animate visibility transition
+    //         Tween tween = GetTree().CreateTween();
+    //         float targetAlpha = isVisible ? DefaultAlpha : TransparentAlpha;
+    //         tween.TweenProperty(container, "modulate:a", targetAlpha, FadeAnimationDuration);
+    //     }
+    // }
+    //
+    // public bool ShouldSkipPlayer(Player player)
+    // {
+    //     // Skip if player is dead and their avatar is fully transparent
+    //     if (_playerAvatars.TryGetValue(player, out Control container))
+    //     {
+    //         return player.IsDead && container.Modulate.A <= TransparentAlpha;
+    //     }
+    //     return false;
+    // }
+
     private void RemoveOldAvatar(Control avatar)
     {
         Logger.Debug("TurnOrderDisplay: Removing old avatar", _shouldLog);
@@ -204,14 +258,15 @@ public partial class TurnOrderDisplay : Control
 
         return container;
     }
-    
+
+    // TODO: Use this
     public void SetPreviewState(Player player, bool isPreview)
     {
         if (_playerAvatars.TryGetValue(player, out Control container))
         {
             // Find the ColorRect (background) within the CenterContainer
             ColorRect background = container.GetChild<ColorRect>(0);
-        
+
             // Animate the background alpha
             Tween tween = GetTree().CreateTween();
             float targetAlpha = isPreview ? 0.5f : TransparentAlpha;

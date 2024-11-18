@@ -34,19 +34,7 @@ public class CombatTurnManager
 
     public void RemovePlayer(Player player)
     {
-        // player.dead
-        // _turnOrderDisplay.RemoveAvatar(player);
-        // TurnOrder.Remove(player);
-        // if (player.IsAlly)
-        // {
-        //     AllyTurnOrder.Remove(player);
-        // }
-        // else
-        // {
-        //     EnemyTurnOrder.Remove(player);
-        // }
-        //
-        // GameUtils.CombatEntities.Remove(player);
+        _turnOrderDisplay.RemoveAvatar(player);
     }
 
     private void ProcessPlayer(Player player, CombatManager combatManager)
@@ -92,6 +80,11 @@ public class CombatTurnManager
             {
                 nextPlayer ??= TurnOrder[i];
             }
+            // else if (nextPlayer == null)
+            // {
+            //     TurnOrder.Remove(CurrentPlayer);
+            //     TurnOrder.Add(CurrentPlayer);
+            // }
         }
 
         // Player nextPlayer = TurnOrder[1];
@@ -138,7 +131,7 @@ public class CombatTurnManager
             _shouldLog);
 
         EndCurrentPlayerTurn();
-        UpdateTurnOrder();
+        UpdateTurnOrder(nextPlayer);
         SetNewCurrentPlayer(nextPlayer);
 
         return CurrentPlayer;
@@ -151,11 +144,22 @@ public class CombatTurnManager
         _turnOrderDisplay.CycleAvatars(CurrentPlayer);
     }
 
-    private void UpdateTurnOrder()
+    private void UpdateTurnOrder(Player nextPlayer)
     {
         Logger.Debug("CombatTurnManager: Updating turn order", _shouldLog);
+        int nextPlayerIndex = TurnOrder.IndexOf(nextPlayer);
+
+        // Move current player to end
         TurnOrder.Remove(CurrentPlayer);
         TurnOrder.Add(CurrentPlayer);
+
+        // Move any players between current and next to end
+        for (int i = 0; i < nextPlayerIndex - 1; i++)
+        {
+            Player skippedPlayer = TurnOrder[0];
+            TurnOrder.RemoveAt(0);
+            TurnOrder.Add(skippedPlayer);
+        }
     }
 
     private void SetNewCurrentPlayer(Player nextPlayer)

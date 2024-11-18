@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using NinthLife.scripts.game.combat;
 using NinthLife.scripts.utils;
@@ -325,14 +327,33 @@ public partial class CombatManager : Node2D
 
     private void RemovePlayerFromGame(Player player)
     {
+        int CountAlivePlayers(List<Player> players)
+        {
+            return players.Count(combatant => !combatant.IsDead);
+        }
+
         switch (player.IsAlly)
         {
-            case true when _combatTurnManager.AllyTurnOrder.Count == 1:
-                Logger.Debug("CombatManager: *****Game Over*****");
+            case true when CountAlivePlayers(_combatTurnManager.AllyTurnOrder) == 0:
+            {
+                Logger.Debug("*****Game Over*****");
+                Control endGameScene = ResourceManager.Load<PackedScene>("res://scenes/end_game_display.tscn")
+                    .Instantiate<Control>();
+                Label label = endGameScene.GetNode<Label>("Label");
+                label.Text = "Game Over";
+                GetTree().Root.AddChild(endGameScene);
                 return;
-            case false when _combatTurnManager.EnemyTurnOrder.Count == 1:
-                Logger.Debug("CombatManager: *****You Win!!!*****");
+            }
+            case false when CountAlivePlayers(_combatTurnManager.EnemyTurnOrder) == 0:
+            {
+                Logger.Debug("*****You Win!!!*****");
+                Control endGameScene = ResourceManager.Load<PackedScene>("res://scenes/end_game_display.tscn")
+                    .Instantiate<Control>();
+                Label label = endGameScene.GetNode<Label>("Label");
+                label.Text = "You Win!!!";
+                GetTree().Root.AddChild(endGameScene);
                 return;
+            }
             case true when player == _combatUiManager.LastAlly:
             {
                 Player replacementPlayer = player == _combatTurnManager.AllyTurnOrder[0]
@@ -341,6 +362,10 @@ public partial class CombatManager : Node2D
                 _combatUiManager.HandlePlayerDeath(player, replacementPlayer);
                 break;
             }
+            case true:
+                CombatUiManager.ShowHand(player, false);
+                CombatUiManager.ShowBoard(player, false);
+                break;
             case false:
             {
                 Player replacementPlayer = player == _combatTurnManager.EnemyTurnOrder[0]
@@ -354,7 +379,10 @@ public partial class CombatManager : Node2D
         player.PlayerDeath(() =>
         {
             _combatTurnManager.RemovePlayer(player);
-            GetTree().CreateTimer(0.3).Timeout += () => EmitSignal(SignalName.EnemyTurnResolved);
+            GetTree().CreateTimer(0.3).Timeout += () =>
+            {
+                EmitSignal(SignalName.EnemyTurnResolved);
+            };
         });
     }
 

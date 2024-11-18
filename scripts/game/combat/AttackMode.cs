@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using NinthLife.scripts.utils;
 
@@ -106,13 +108,14 @@ public class AttackMode : ICombatMode
     private Player SelectRandomAllyTarget()
     {
         Random random = new();
-        int randomAllyIndex = random.Next(0, _turnManager.AllyTurnOrder.Count);
-        return _turnManager.AllyTurnOrder[randomAllyIndex];
+        List<Player> aliveAllies = _turnManager.AllyTurnOrder.Where(ally => !ally.IsDead).ToList();
+        int randomAllyIndex = random.Next(0, aliveAllies.Count);
+        return aliveAllies[randomAllyIndex];
     }
 
     private void SetupEnemyTargetables()
     {
-        _turnManager.EnemyTurnOrder.ForEach(player =>
+        _turnManager.EnemyTurnOrder.Where(player => !player.IsDead).ToList().ForEach(player =>
         {
             Logger.Debug($"AttackMode: Setting up attack indicators for: {player.PlayerName}", _shouldLog);
             player.SetAttackModeIndicator(true);

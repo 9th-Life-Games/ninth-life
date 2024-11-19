@@ -188,27 +188,6 @@ public partial class TurnOrderDisplay : Control
         tween.TweenCallback(Callable.From(onComplete));
     }
 
-    // public void SetPlayerVisibility(Player player, bool isVisible)
-    // {
-    //     if (_playerAvatars.TryGetValue(player, out Control container))
-    //     {
-    //         // Animate visibility transition
-    //         Tween tween = GetTree().CreateTween();
-    //         float targetAlpha = isVisible ? DefaultAlpha : TransparentAlpha;
-    //         tween.TweenProperty(container, "modulate:a", targetAlpha, FadeAnimationDuration);
-    //     }
-    // }
-    //
-    // public bool ShouldSkipPlayer(Player player)
-    // {
-    //     // Skip if player is dead and their avatar is fully transparent
-    //     if (_playerAvatars.TryGetValue(player, out Control container))
-    //     {
-    //         return player.IsDead && container.Modulate.A <= TransparentAlpha;
-    //     }
-    //     return false;
-    // }
-
     private void RemoveOldAvatar(Control avatar)
     {
         Logger.Debug("TurnOrderDisplay: Removing old avatar", _shouldLog);
@@ -259,7 +238,11 @@ public partial class TurnOrderDisplay : Control
         return container;
     }
 
-    // TODO: Use this
+    /**
+     * Unused, leaving for future reference.
+     * Will be used to indicate if player is being previewed or in attack mode.
+     * Might ditch, but keeping this here for now.
+     */
     public void SetPreviewState(Player player, bool isPreview)
     {
         if (_playerAvatars.TryGetValue(player, out Control container))

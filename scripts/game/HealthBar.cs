@@ -10,7 +10,6 @@ public partial class HealthBar : Control
     private ProgressBar _healthBar;
 
     private Health _healthComponent;
-    // private Label _healthLabel;
 
     public override void _Ready()
     {
@@ -21,7 +20,6 @@ public partial class HealthBar : Control
     private void InitializeComponents()
     {
         _healthBar = GetNode<ProgressBar>("ProgressBar");
-        // _healthLabel = GetNode<Label>("HealthLabel");
     }
 
     public void Initialize(Health healthComponent)
@@ -38,7 +36,6 @@ public partial class HealthBar : Control
         Logger.Debug($"HealthBar: Updating display - Current: {currentHealth}, Max: {maxHealth}", _shouldLog);
         _healthBar.MaxValue = maxHealth;
         _healthBar.Value = currentHealth;
-        // _healthLabel.Text = $"{currentHealth}/{maxHealth}";
     }
 
     private void OnDamageTaken(int amount)

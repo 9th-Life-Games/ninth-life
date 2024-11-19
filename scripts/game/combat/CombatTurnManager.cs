@@ -80,14 +80,8 @@ public class CombatTurnManager
             {
                 nextPlayer ??= TurnOrder[i];
             }
-            // else if (nextPlayer == null)
-            // {
-            //     TurnOrder.Remove(CurrentPlayer);
-            //     TurnOrder.Add(CurrentPlayer);
-            // }
         }
 
-        // Player nextPlayer = TurnOrder[1];
         Logger.Debug($"CombatTurnManager: Next player will be: {nextPlayer?.PlayerName}", _shouldLog);
         return nextPlayer;
     }
@@ -165,7 +159,6 @@ public class CombatTurnManager
     private void SetNewCurrentPlayer(Player nextPlayer)
     {
         Logger.Debug($"CombatTurnManager: Setting new current player to {nextPlayer.PlayerName}", _shouldLog);
-        // if nextPlayer.isDead then skip
         CurrentPlayer = nextPlayer;
     }
 }

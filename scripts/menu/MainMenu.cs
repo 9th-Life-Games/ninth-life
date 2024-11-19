@@ -89,7 +89,7 @@ public partial class MainMenu : Control
     private void StartBackgroundMusic()
     {
         Logger.Debug("Starting background music", ShouldLog);
-        // _musicPlayer?.Play();
+        _musicPlayer?.Play();
     }
 
     public override void _UnhandledInput(InputEvent @event)

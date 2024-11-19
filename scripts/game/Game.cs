@@ -36,7 +36,7 @@ public partial class Game : Node2D
     private void StartBackgroundMusic()
     {
         Logger.Debug("Game: Starting background music", _shouldLog);
-        // _musicPlayer?.Play();
+        _musicPlayer?.Play();
     }
 
     public override void _Input(InputEvent @event)

@@ -32,6 +32,11 @@ public class CombatTurnManager
         InitializeFirstTurn();
     }
 
+    public void RemovePlayer(Player player)
+    {
+        _turnOrderDisplay.RemoveAvatar(player);
+    }
+
     private void ProcessPlayer(Player player, CombatManager combatManager)
     {
         Logger.Debug($"CombatTurnManager: Processing player: {player.PlayerName} (Initiative: {player.Initiative})",
@@ -68,8 +73,16 @@ public class CombatTurnManager
 
     public Player GetNextPlayer()
     {
-        Player nextPlayer = TurnOrder[1];
-        Logger.Debug($"CombatTurnManager: Next player will be: {nextPlayer.PlayerName}", _shouldLog);
+        Player nextPlayer = null;
+        for (int i = 1; i < TurnOrder.Count; i++)
+        {
+            if (!TurnOrder[i].IsDead)
+            {
+                nextPlayer ??= TurnOrder[i];
+            }
+        }
+
+        Logger.Debug($"CombatTurnManager: Next player will be: {nextPlayer?.PlayerName}", _shouldLog);
         return nextPlayer;
     }
 
@@ -112,7 +125,7 @@ public class CombatTurnManager
             _shouldLog);
 
         EndCurrentPlayerTurn();
-        UpdateTurnOrder();
+        UpdateTurnOrder(nextPlayer);
         SetNewCurrentPlayer(nextPlayer);
 
         return CurrentPlayer;
@@ -125,11 +138,22 @@ public class CombatTurnManager
         _turnOrderDisplay.CycleAvatars(CurrentPlayer);
     }
 
-    private void UpdateTurnOrder()
+    private void UpdateTurnOrder(Player nextPlayer)
     {
         Logger.Debug("CombatTurnManager: Updating turn order", _shouldLog);
+        int nextPlayerIndex = TurnOrder.IndexOf(nextPlayer);
+
+        // Move current player to end
         TurnOrder.Remove(CurrentPlayer);
         TurnOrder.Add(CurrentPlayer);
+
+        // Move any players between current and next to end
+        for (int i = 0; i < nextPlayerIndex - 1; i++)
+        {
+            Player skippedPlayer = TurnOrder[0];
+            TurnOrder.RemoveAt(0);
+            TurnOrder.Add(skippedPlayer);
+        }
     }
 
     private void SetNewCurrentPlayer(Player nextPlayer)

@@ -1,0 +1,26 @@
+[gd_scene load_steps=2 format=3 uid="uid://b84uj2p51pysw"]
+
+[ext_resource type="FontFile" uid="uid://diqt2vii6tchx" path="res://assets/Fonts/CloisterBlack.ttf" id="1_tsgrv"]
+
+[node name="EndGameDisplay" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PanelContainer" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_right = 960.0
+offset_bottom = 540.0
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 2
+offset_top = 258.0
+offset_right = 960.0
+offset_bottom = 281.0
+theme_override_fonts/font = ExtResource("1_tsgrv")
+theme_override_font_sizes/font_size = 48
+text = "Game Over"
+horizontal_alignment = 1

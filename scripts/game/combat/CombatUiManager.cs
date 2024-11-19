@@ -9,7 +9,7 @@ public class CombatUiManager
     private Button _attackButton;
     private Button _endTurnButton;
 
-    private Player LastAlly { get; set; }
+    public Player LastAlly { get; private set; }
     public Player LastEnemy { get; private set; }
 
     public void SetButtons(Button endTurnButton, Button attackButton)
@@ -189,6 +189,23 @@ public class CombatUiManager
         else
         {
             Logger.Debug($"CombatUiManager: Attempted to set ally {enemy.PlayerName} as last enemy", ShouldLog);
+        }
+    }
+
+    public void HandlePlayerDeath(Player target, Player replacementPlayer)
+    {
+        ShowHand(target, false);
+        ShowBoard(target, false);
+        if (target.IsAlly)
+        {
+            LastAlly = replacementPlayer;
+            ShowHand(LastAlly, true, true);
+            ShowBoard(LastAlly, true);
+        }
+        else
+        {
+            LastEnemy = replacementPlayer;
+            ShowBoard(LastEnemy, true);
         }
     }
 }

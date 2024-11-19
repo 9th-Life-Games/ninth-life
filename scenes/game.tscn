@@ -117,14 +117,14 @@ position = Vector2(480, 270)
 texture = ExtResource("2_c8b80")
 
 [node name="Floor" type="Node2D" parent="Background"]
-position = Vector2(0, -8)
+position = Vector2(0, 4)
 
 [node name="AllyFloor" type="Sprite2D" parent="Background/Floor"]
-position = Vector2(-353, -4.5)
+position = Vector2(-363, -4.5)
 texture = ExtResource("3_sjmhi")
 
 [node name="EnemyFloor" type="Sprite2D" parent="Background/Floor"]
-position = Vector2(359, -4.5)
+position = Vector2(389, -4.5)
 texture = ExtResource("4_751si")
 
 [node name="TurnOrderDisplay" type="Control" parent="."]
@@ -156,9 +156,9 @@ script = ExtResource("5_epdu6")
 
 [node name="EndTurn" type="Button" parent="."]
 offset_left = 764.0
-offset_top = 355.0
+offset_top = 371.0
 offset_right = 898.0
-offset_bottom = 400.0
+offset_bottom = 416.0
 focus_mode = 0
 theme_override_fonts/font = ExtResource("6_7xwbe")
 theme_override_font_sizes/font_size = 24
@@ -166,9 +166,9 @@ text = "End Turn"
 
 [node name="Attack" type="Button" parent="."]
 offset_left = 754.0
-offset_top = 282.0
+offset_top = 298.0
 offset_right = 908.0
-offset_bottom = 347.0
+offset_bottom = 363.0
 focus_mode = 0
 theme_override_fonts/font = ExtResource("6_7xwbe")
 theme_override_font_sizes/font_size = 48
@@ -176,7 +176,7 @@ toggle_mode = true
 text = "Attack"
 
 [node name="RollIndicator" type="Node2D" parent="."]
-position = Vector2(834, 281)
+position = Vector2(834, 297)
 
 [node name="Label" type="Label" parent="RollIndicator"]
 offset_left = -119.0

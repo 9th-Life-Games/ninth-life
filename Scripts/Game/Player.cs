@@ -9,7 +9,6 @@ namespace NinthLife.scripts.game;
 
 public partial class Player : Node2D
 {
-    // Signals
     [Signal]
     public delegate void AllyHandEnabledEventHandler(bool enabled);
 
@@ -180,7 +179,6 @@ public partial class Player : Node2D
         {
             EmitSignal(SignalName.DeathAnimationFinished);
             callback?.Invoke();
-            // QueueFree();
         };
     }
 

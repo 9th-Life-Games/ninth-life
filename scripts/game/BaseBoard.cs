@@ -8,6 +8,9 @@ namespace NinthLife.scripts.game;
 
 public partial class BaseBoard : Node2D
 {
+    [Signal]
+    public delegate void StackActionEventHandler(string suitName);
+
     private const float AnimationSpeed = 0.1f;
     private const float DiscardDelay = 0.5f;
     private const float InPlayCardSpacing = 84f; // Total width from -47 to 47
@@ -113,7 +116,11 @@ public partial class BaseBoard : Node2D
 
         if (progressBar.Value >= progressBar.MaxValue)
         {
-            Logger.Debug($"BaseBoard: Progress bar full for {card.SuitType}, moving cards to discard", _shouldLog);
+            Logger.Debug(
+                $"BaseBoard: Progress bar full for {card.SuitType} card {card.SuitName}, moving cards to discard",
+                _shouldLog);
+            EmitSignal(SignalName.StackAction, card.SuitName);
+
             AddCardsToDiscardSequentially(cardsToMove, card.SuitType);
             progressBar.Value = 0;
         }

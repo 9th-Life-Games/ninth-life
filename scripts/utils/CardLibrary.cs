@@ -60,6 +60,7 @@ public partial class CardLibrary : Node
                 PackedScene cardScene = ResourceManager.Load<PackedScene>("res://scenes/card.tscn");
                 Card card = (Card)cardScene.Instantiate();
                 card.Name = key;
+                card.SetSuitName(key);
 
                 card.SetSuitType(suit.SubType != null
                     ? suit.SubType switch

@@ -16,7 +16,7 @@ public partial class Card : Sprite2D
     }
 
     private const float StateTransitionDelay = 0.1f;
-    private readonly bool _shouldLog = false;
+    private readonly bool _shouldLog = true;
 
     private AnimationPlayer _animationPlayer;
     private Button _button;
@@ -25,6 +25,7 @@ public partial class Card : Sprite2D
     private bool _isButtonVisible;
 
     public CardLibrary.SuitType SuitType { get; private set; }
+    public string SuitName { get; private set; }
     public int NumericValue { get; private set; }
     public bool IsFaceCard { get; private set; }
 
@@ -55,11 +56,12 @@ public partial class Card : Sprite2D
         _animationPlayer.AnimationFinished += OnAnimationFinished;
     }
 
-    public void Initialize(CardLibrary.SuitType suitType, int numericValue, bool isFaceCard)
+    public void Initialize(CardLibrary.SuitType suitType, string suitName, int numericValue, bool isFaceCard)
     {
         Logger.Debug($"Card: Initializing card: Type={suitType}, Value={numericValue}, IsFace={isFaceCard}",
             _shouldLog);
         SuitType = suitType;
+        SuitName = suitName;
         NumericValue = numericValue;
         IsFaceCard = isFaceCard;
     }
@@ -73,6 +75,12 @@ public partial class Card : Sprite2D
     {
         NumericValue = numericValue;
         IsFaceCard = numericValue > 10;
+    }
+
+    public void SetSuitName(string suitName)
+    {
+        Logger.Debug($"Card: Setting suit name to {suitName}", _shouldLog);
+        SuitName = suitName;
     }
 
     public void SetMode(CardMode mode, bool playEnterAnimation = false)

@@ -260,7 +260,7 @@ public class PreviewMode : ICombatMode
     private void RestoreUiState(Player currentPlayer)
     {
         _uiManager.SetEndTurnButtonState(true);
-        if (!_combatManager.HasAttacked)
+        if (_combatManager.TotalAttacksThisTurn >= 1)
         {
             _uiManager.SetAttackButtonState(true);
         }

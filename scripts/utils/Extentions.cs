@@ -19,7 +19,7 @@ public static class Extensions
         PackedScene cardScene = ResourceManager.Load<PackedScene>("res://scenes/card.tscn");
         Card newCard = (Card)cardScene.Instantiate();
         newCard.Texture = card.Texture;
-        newCard.Initialize(card.SuitType, card.NumericValue, card.IsFaceCard);
+        newCard.Initialize(card.SuitType, card.SuitName, card.NumericValue, card.IsFaceCard);
 
         newCard.SetMode(mode, playEnterAnimation);
 

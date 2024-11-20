@@ -30,7 +30,7 @@ public partial class CombatManager : Node2D
     public AudioStreamPlayer2D AttackSound { get; private set; }
     private Player FirstAlly { get; set; }
     public Player FirstEnemy { get; private set; }
-    public bool HasAttacked { get; private set; }
+    public int TotalAttacksThisTurn { get; private set; } = 1;
 
     public override void _Ready()
     {
@@ -107,6 +107,8 @@ public partial class CombatManager : Node2D
             FirstEnemy
         );
 
+        _combatTurnManager.CurrentPlayer.PlayerBoard.StackAction += OnStackAction;
+
         _modeManager = new CombatModeManager(this, _combatUiManager, _combatTurnManager);
 
         if (!_combatTurnManager.CurrentPlayer.IsAlly)
@@ -121,6 +123,39 @@ public partial class CombatManager : Node2D
             _combatUiManager.SetEndTurnButtonState(true);
             _combatUiManager.SetAttackButtonState(true);
         }
+    }
+
+    private void OnStackAction(string suitName)
+    {
+        Logger.Debug("CombatManager: On stack action called: " + suitName, _shouldLog);
+        switch (suitName)
+        {
+            case "longblade":
+                WeaponAttack();
+                break;
+            case "shortblade":
+                WeaponAttack();
+                break;
+            case "mace":
+                WeaponAttack();
+                break;
+            case "goblin":
+                WeaponAttack();
+                break;
+        }
+    }
+
+    private void WeaponAttack()
+    {
+        if (_combatTurnManager.CurrentPlayer.IsAlly)
+        {
+            _combatUiManager.SetAttackButtonState(false);
+        }
+
+        TotalAttacksThisTurn++;
+        Logger.Debug($"CombatManager: Weapon attack! Total attacks: {TotalAttacksThisTurn}", _shouldLog);
+        _modeManager.EnterMode(CombatModeManager.CombatModeType.Attack,
+            _combatTurnManager.CurrentPlayer.IsAlly);
     }
 
     private void SetupEventHandlers()
@@ -235,8 +270,8 @@ public partial class CombatManager : Node2D
     public void ExecuteAttack(Player target)
     {
         Logger.Debug($"CombatManager: Executing attack on {target.PlayerName}", _shouldLog);
-        _attackButton.Disabled = true;
-        HasAttacked = true;
+        TotalAttacksThisTurn--;
+        _combatUiManager.SetAttackButtonState(false);
         RollForAttack();
 
         Card drawnCard = DrawDefenseCard(target);
@@ -277,6 +312,10 @@ public partial class CombatManager : Node2D
                 if (!target.IsAlly)
                 {
                     _combatUiManager.SetEndTurnButtonState(true);
+                    if (TotalAttacksThisTurn >= 1)
+                    {
+                        _combatUiManager.SetAttackButtonState(true);
+                    }
                 }
             }
 
@@ -298,6 +337,10 @@ public partial class CombatManager : Node2D
                 if (!target.IsAlly)
                 {
                     _combatUiManager.SetEndTurnButtonState(true);
+                    if (TotalAttacksThisTurn >= 1)
+                    {
+                        _combatUiManager.SetAttackButtonState(true);
+                    }
                 }
 
                 EmitSignal(SignalName.EnemyTurnResolved);
@@ -462,8 +505,9 @@ public partial class CombatManager : Node2D
     private void TransitionToNextPlayer(Player nextPlayer)
     {
         _combatUiManager.HideLastPlayerBoard(nextPlayer.IsAlly);
-
+        _combatTurnManager.CurrentPlayer.PlayerBoard.StackAction -= OnStackAction;
         Player currentPlayer = _combatTurnManager.SwapTurnToNextPlayer(nextPlayer);
+        currentPlayer.PlayerBoard.StackAction += OnStackAction;
 
         if (!currentPlayer.IsAlly)
         {
@@ -472,7 +516,7 @@ public partial class CombatManager : Node2D
         }
 
         _combatUiManager.ShowPlayerUi(currentPlayer);
-        HasAttacked = false;
+        TotalAttacksThisTurn = 1;
         currentPlayer.StartTurn();
     }
 

@@ -552,7 +552,14 @@ public partial class CombatManager : Node2D
         void OnEnemyTurnResolved()
         {
             EnemyTurnResolved -= OnEnemyTurnResolved;
-            GetTree().CreateTimer(0.5).Timeout += NextTurn;
+            if (TotalAttacksThisTurn >= 1)
+            {
+                OnEnemyFinishedPlayingHand();
+            }
+            else
+            {
+                GetTree().CreateTimer(0.5).Timeout += NextTurn;
+            }
         }
 
         EnemyTurnResolved += OnEnemyTurnResolved;

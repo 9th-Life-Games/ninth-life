@@ -154,9 +154,9 @@ public partial class Player : Node2D
         // Different health values for different characters
         int maxHealth = PlayerName switch
         {
-            "Skull" => 10,
-            "Hope" => 10,
-            "Drinker" => 10,
+            "Skull" => 20,
+            "Hope" => 20,
+            "Drinker" => 20,
             "Goblin" => 10,
             "Goblin 2" => 10,
             "Goblin 3" => 10,
@@ -626,6 +626,13 @@ public partial class Player : Node2D
     public void CalculateInitiative()
     {
         Random rand = new();
+        // switch (PlayerName)
+        // {
+        //     case "Skull":
+        //         _initiativeBonus += 100;
+        //         break;
+        // }
+
         Initiative = rand.Next(100) + 1 + _initiativeBonus;
         Logger.Debug(
             $"Player: Calculated initiative for {PlayerName}: {Initiative} (base: {Initiative - _initiativeBonus}, bonus: {_initiativeBonus})",

@@ -1,7 +1,6 @@
-[gd_scene load_steps=14 format=3 uid="uid://dntos7fy5n6ko"]
+[gd_scene load_steps=13 format=3 uid="uid://dntos7fy5n6ko"]
 
 [ext_resource type="Script" path="res://scripts/game/Player.cs" id="1_wps60"]
-[ext_resource type="Texture2D" uid="uid://bfig3w6gk0hv" path="res://assets/Character Sprites/Skull/skull_sprite.png" id="2_0l6nn"]
 [ext_resource type="Script" path="res://scripts/game/Hand.cs" id="2_addbm"]
 [ext_resource type="Script" path="res://scripts/game/HealthBar.cs" id="3_khnfb"]
 [ext_resource type="Script" path="res://scripts/components/Health.cs" id="5_vnhhg"]
@@ -189,7 +188,6 @@ bg_color = Color(0.0704313, 0.527741, 0.304118, 1)
 script = ExtResource("1_wps60")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-texture = ExtResource("2_0l6nn")
 hframes = 3
 
 [node name="Button" type="Button" parent="Sprite2D"]
